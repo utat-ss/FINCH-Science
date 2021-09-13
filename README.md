@@ -1,3 +1,3 @@
 # Science
 
-Currently working on researching and building a proxy retrieval algo. Will be undertaking a synthetic study after.
+Developing the system needed to clean our data. Given the comms error-corrected, reconstructed data cube, we want to generate Level 1B data.
