@@ -122,7 +122,7 @@ class Forward:
 
         '''
 
-        self.z_value = 20
+        self.z_value = 500
         self.column_number_density = self.volume_number_density*self.z_value
 
         # Half width at half-maximum of the Doppler-broadened component
