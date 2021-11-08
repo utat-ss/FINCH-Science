@@ -61,7 +61,7 @@ class Optim:
 
         self.rand_errors = [self.rand_error, self.dark_noise, self.readout_noise, self.quant_noise, self.photon_noise]
         print(self.rand_errors)
-        
+
         return self.rand_errors
 
     def error_covariance(self, random_errors):
@@ -70,7 +70,7 @@ class Optim:
 
         Parameters:
             self: contains configuration details from the initialization
-            random_errors: enter the array containing [total error, dark current, readout, quantization, photon noise].
+            random_errors: array containing [total error, dark current, readout, quantization, photon noise].
 
         Returns:
             S_y: Random error covariance matrix
@@ -84,7 +84,7 @@ class Optim:
 
         Parameters:
             self: contains configuration details from the initialization
-            sys_errors: enter the array containing [total error, non-linearity, stray light, crosstalk, flat-field, bad pixel, keystone/smile, memory, striping].
+            sys_errors: array containing [total error, non-linearity, stray light, crosstalk, flat-field, bad pixel, keystone/smile, memory, striping].
 
         Returns:
             delta_y: Systematic error vector 
