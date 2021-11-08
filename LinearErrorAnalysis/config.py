@@ -16,6 +16,8 @@ def parse_config():
     parser.add_argument("--pressure", type=float, default=1, help='pressure (atm)')
     parser.add_argument("--spectral_lower", type=float, default=1590, help='wavelength (nm)')
     parser.add_argument("--spectral_upper", type=float, default=1680, help='wavelength (nm)')
+    parser.add_argument("--fwhm", type=float, default=1.5, help='full-width half maximum for the spectral grid.')
+    parser.add_argument("--recalc_xsec", type=bool, default=True, help='choose whether or not to regather data from online through HAPI')
     parser.add_argument("--altitude", type=float, default=50, help='altitude (km)')
     parser.add_argument("--co2_file", type=str, metavar='PATH', default='./hitran_data/co2_line_by_line.par', help='Enter the path of the co2_line_by_line.par file')
     parser.add_argument("--ch4_file", type=str, metavar='PATH', default='./hitran_data/ch4_line_by_line.par', help='Enter the path of the ch4_line_by_line.par file')
