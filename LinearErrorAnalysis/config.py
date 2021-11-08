@@ -15,10 +15,11 @@ def parse_config():
     parser.add_argument("--spectral_lower", type=float, default=1590, help='wavelength (nm)')
     parser.add_argument("--spectral_upper", type=float, default=1680, help='wavelength (nm)')
     parser.add_argument("--fwhm", type=float, default=1.5, help='full-width half maximum for the spectral grid.')
-    parser.add_argument("--recalc_xsec", type=bool, default=True, help='choose whether or not to regather data from online through HAPI')
+    parser.add_argument("--recalc_xsec", type=bool, default=False, help='choose whether or not to regather data from online through HAPI')
     parser.add_argument("--sza", type=float, default=50., help='solar zenith angle')
     parser.add_argument("--vza", type=float, default=0., help='viewing zenith angle')
     # Relevant File Paths
+    parser.add_argument("--output_folder", type=str, metavar='PATH', default='./data', help='specify output path to save lbl data to')
     parser.add_argument("--solar_spectrum", type=str, metavar='PATH', default='./data/solar_spectrum_merged.dat', help='enter the path to the solar spectrum .dat file')
     parser.add_argument("--atm_model", type=str, metavar='PATH', default='./data/prof.AFGL.US.std', help='enter the path to the atmospheric model .dat file')
     parser.add_argument("--pickle_file", type=str, metavar='PATH', default='./tmp/optics_prop.pkl', help='enter the path to the temporary optics pickle file')

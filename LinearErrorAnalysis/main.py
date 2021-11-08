@@ -7,7 +7,6 @@ Author(s): Adyn Miles, Shiqi Xu, Rosie Liang
 """
 
 import numpy as np
-import hapi as hp
 from config import parse_config
 from forward import Forward
 from optim import Optim

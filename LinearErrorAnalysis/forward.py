@@ -13,18 +13,8 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pkl
-
-# Add user-defined ../lib to system path
-lib_path = os.path.abspath(os.path.join('../lib'))
-if lib_path not in sys.path:
-    sys.path.append(lib_path)
-import libRT as libRT
-import hapi as hp
-
-# Add user-defined ../data to system path
-data_path = os.path.abspath(os.path.join('../data'))
-if data_path not in sys.path:
-    sys.path.append(data_path)
+import lib.libRT as libRT
+import lib.hapi as hp
 
 class Forward:
     def __init__(self, cfg):
@@ -72,7 +62,7 @@ class Forward:
 
 
 
-    def get_solar_model_spectrum(self, filen, wave_lbl):
+    def get_solar_model_spectrum(self, filen):
         """
         Find the solar spectrum from an inputted .dat file
 
@@ -99,31 +89,31 @@ class Forward:
         return(self.sun)
 
 
-    def slit_conv(self, fwhm, wave, wave_meas,rad_lbl):
+    def slit_conv(self, rad_lbl):
 
         """
 
         Args:
             self.fwhm: full width half maximum (spectral resolution)
-            self.wave:
-            self.wave_meas:
-            self.rad_lbl:
+            self.wave_lbl: line-by-line spectral grid
+            self.wave_meas: sampling spectral grid
+            rad_lbl: line-by-line radiance 
         
         Returns:
-            self.rad_conv: solar model spectrum
+            self.rad_conv: 
 
         """
     
         dmeas = self.wave_meas.size
-        dlbl  = self.wave.size
+        dlbl  = self.wave_lbl.size
         slit  = np.zeros(shape=(dmeas,dlbl))
         const = self.fwhm**2/(4*np.log(2))
         for l,wmeas in enumerate(self.wave_meas):
-            wdiff = self.wave - wmeas
+            wdiff = self.wave_lbl - wmeas
             slit[l,:] = np.exp(-wdiff**2/const)
             slit[l,:] = slit[l,:]/np.sum(slit[l,:])
 
-        self.rad_conv = slit.dot(self.rad_lbl)
+        self.rad_conv = slit.dot(rad_lbl)
         return(self.rad_conv)
 
     def get_atm_params(self):
@@ -143,16 +133,16 @@ class Forward:
             self.sun_lbl: solar spectrum
 
         """
-        file_sun = self.cfg.solar_spectrum
-        file_atm = self.cfg.atm_model
+        file_sun = os.path.normpath(self.cfg.solar_spectrum)
+        file_atm = os.path.normpath(self.cfg.atm_model)
 
-        self.sun_lbl = self.get_solar_model_spectrum(file_sun, self.wave_lbl)
+        self.sun_lbl = self.get_solar_model_spectrum(file_sun)
         self.atm = libRT.atmosphere_data(self.zlay, self.zlev, self.psurf)
         self.atm.get_data_AFGL(file_atm)
 
         iso_ids=[('CH4',32),('CO2',7),('H2O',1)]   #see hapi manual  sec 6.6
         self.molec = libRT.molecular_data(self.wave_lbl)
-        self.molec.get_data_HITRAN('../data/',iso_ids)
+        self.molec.get_data_HITRAN(os.path.normpath(self.cfg.output_folder),iso_ids)
 
         self.surface = libRT.surface_prop(self.wave_lbl)
         self.surface.get_albedo_flat(.2)
@@ -175,7 +165,7 @@ class Forward:
         """
 
         # Calculate optical properties
-        pklfile = self.cfg.pickle_file
+        pklfile = os.path.normpath(self.cfg.pickle_file)
         #If pickle file exists read from file
         #if os.path.exists(pklfile):
         if self.recalc_xsec == True:
@@ -215,41 +205,41 @@ class Forward:
         """
         self.optics.combine('molec_32','molec_07','molec_01')
 
-        rad_trans_tot, dev_rad = libRT.transmission(self.optics, self.surface, self.mu0, self.muv, 'molec_32')
-        rad_conv_tot = slit_conv(self.fwhm, self.wave_lbl, self.wave_meas, rad_trans_tot)
+        self.rad_trans_tot, self.dev_rad = libRT.transmission(self.optics, self.surface, self.mu0, self.muv, 'molec_32')
+        self.rad_conv_tot = self.slit_conv(self.rad_trans_tot)
 
-        optics.combine('molec_32')
-        rad_trans_ch4 = libRT.transmission(self.optics, self.surface, self.mu0, self.muv)
-        rad_conv_ch4 = slit_conv(self.fwhm, self.wave_lbl, self.wave_meas, rad_trans_ch4)
+        self.optics.combine('molec_32')
+        self.rad_trans_ch4 = libRT.transmission(self.optics, self.surface, self.mu0, self.muv)
+        self.rad_conv_ch4 = self.slit_conv(self.rad_trans_ch4)
 
-        optics.combine('molec_07')
-        rad_trans_co2 = libRT.transmission(self.optics, self.surface, self.mu0, self.muv)
-        rad_conv_co2 = slit_conv(self.fwhm, self.wave_lbl, self.wave_meas, rad_trans_co2)
+        self.optics.combine('molec_07')
+        self.rad_trans_co2 = libRT.transmission(self.optics, self.surface, self.mu0, self.muv)
+        self.rad_conv_co2 = self.slit_conv(self.rad_trans_co2)
 
-        optics.combine('molec_01')
-        rad_trans_h2o = libRT.transmission(self.optics, self.surface, self.mu0, self.muv)
-        rad_conv_h2o = slit_conv(self.fwhm, self.wave_lbl, self.wave_meas, rad_trans_h2o)
+        self.optics.combine('molec_01')
+        self.rad_trans_h2o = libRT.transmission(self.optics, self.surface, self.mu0, self.muv)
+        self.rad_conv_h2o = self.slit_conv(self.rad_trans_h2o)
 
         fig = plt.figure(figsize=[15, 10])
         plt.subplot(2,2,1)
-        plt.plot(self.wave_meas, rad_conv_tot)
+        plt.plot(self.wave_meas, self.rad_conv_tot)
         plt.ylim([0.035,0.041])
         plt.title('total transmission')
 
         plt.subplot(2,2,2)
-        plt.plot(self.wave_meas,rad_conv_ch4,color = 'green')
+        plt.plot(self.wave_meas, self.rad_conv_ch4,color = 'green')
         plt.ylim([0.035,0.041])
         plt.title('CH$_4$ transmission')
 
         plt.subplot(2,2,3)
-        plt.plot(self.wave_meas,rad_conv_co2,color = 'blue')
+        plt.plot(self.wave_meas, self.rad_conv_co2,color = 'orange')
         plt.ylim([0.035,0.041])
         plt.title('CO$_2$ transmission')
         plt.xlabel('$\lambda$ [nm]')
 
         plt.subplot(2,2,4)
         plt.title('H$_2$O transmission')
-        plt.plot(self.wave_meas,rad_conv_h2o,color = 'blue')
+        plt.plot(self.wave_meas, self.rad_conv_h2o,color = 'red')
         plt.ylim([0.0409,0.04093])
         plt.xlabel('$\lambda$ [nm]')
 
