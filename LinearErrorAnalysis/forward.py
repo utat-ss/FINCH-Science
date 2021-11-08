@@ -28,10 +28,62 @@ if data_path not in sys.path:
 
 class Forward:
     def __init__(self, cfg):
+        """
+        Initializes spectral and atmospheric grids, as well as useful constants for forward model.
+
+        Args:
+            cfg: the configuration arguments generated from config.py
+        
+        Returns:
+            None
+
+        """
         self.cfg = cfg
+        self.recalc_xsec = self.cfg.recalc_xsec
+
+        ### Spectral Grid Initialization
+        self.wave_edges = [self.cfg.spectral_lower, self.cfg.spectral_upper]
+        # Extend the spectral grid by 5nm on each end
+        self.wave_extend = 5
+        self.dwave = 0.001 
+        self.wave_lbl =  np.arange(self.wave_edges[0]-self.wave_extend,self.wave_edges[1]+self.wave_extend,self.dwave)
+
+        ### Atmospheric Grid Initialization
+        self.dzlay= 1.E3          #geometrical thickness of the model atmosphere  
+        self.nlay = 20            #number of layers
+        self.nlev = self.nlay + 1      #number of levels
+
+        self.zlay = (np.arange(self.nlay-1,-1,-1)+0.5)*self.dzlay  #altitude of layer midpoint
+        self.zlev = np.arange(self.nlev-1,-1,-1)*self.dzlay        #altitude of layer interfaces = levels 
+
+        self.sza_meas = self.cfg.sza       #solar zenith angle (degrees)
+        self.vza_meas = self.cfg.vza       #viewing zenith angle (degrees)
+
+        ### Atmospheric Constants
+        self.mu0 = np.cos(np.deg2rad(self.sza_meas))
+        if self.mu0 < 0.: print("ERROR! main: solar cosine < 0; needs to be > 0 by definition.")
+        self.muv = np.cos(np.deg2rad(self.vza_meas))
+        self.psurf = 1013                           #surface pressure (HPa)
+
+        ### Optics Information
+        self.fwhm = self.cfg.fwhm
+        self.samp_dist = 0.5 * self.fwhm
+        self.wave_meas = np.arange(self.wave_edges[0],self.wave_edges[1],self.samp_dist)
+
 
 
     def get_solar_model_spectrum(self, filen, wave_lbl):
+        """
+        Find the solar spectrum from an inputted .dat file
+
+        Args:
+            self.wave_lbl: spectral grid
+            self.cfg.filen: solar spectrum .dat file path.
+        
+        Returns:
+            self.sun: solar model spectrum
+
+        """
 
         h_pl      = 6.626E-34    # Planck constant [Js]
         c_li      = 2.9979E+8    # velocity of light [m/s]
@@ -42,149 +94,164 @@ class Forward:
         conv2      = wave_data/(h_pl*c_li)*1.E-9 #[W sec / photon]
         spec_data  = conv1*conv2*spec_data
         
-        sun = np.interp(wave_lbl,wave_data,spec_data)
+        self.sun = np.interp(self.wave_lbl,wave_data,spec_data)
     
-        return(sun)
+        return(self.sun)
 
 
     def slit_conv(self, fwhm, wave, wave_meas,rad_lbl):
+
+        """
+
+        Args:
+            self.fwhm: full width half maximum (spectral resolution)
+            self.wave:
+            self.wave_meas:
+            self.rad_lbl:
+        
+        Returns:
+            self.rad_conv: solar model spectrum
+
+        """
     
-        dmeas = wave_meas.size
-        dlbl  = wave.size
+        dmeas = self.wave_meas.size
+        dlbl  = self.wave.size
         slit  = np.zeros(shape=(dmeas,dlbl))
-        const = fwhm**2/(4*np.log(2))
-        for l,wmeas in enumerate(wave_meas):
-            wdiff = wave - wmeas
+        const = self.fwhm**2/(4*np.log(2))
+        for l,wmeas in enumerate(self.wave_meas):
+            wdiff = self.wave - wmeas
             slit[l,:] = np.exp(-wdiff**2/const)
             slit[l,:] = slit[l,:]/np.sum(slit[l,:])
 
-        rad_conv = slit.dot(rad_lbl)
-        return(rad_conv)
+        self.rad_conv = slit.dot(self.rad_lbl)
+        return(self.rad_conv)
 
-recalc_xsec = True
-recalc_xsec = False
-######################################################
-#get tropomi data 
-wave_edges = [1590,1680]
+    def get_atm_params(self):
+        """
+        gets solar model, molecular cross-section information, surface albedo properties.
 
-# Spectral grid
-wave_extend = 5 #nm
-dwave = 0.001
-wave_lbl =  np.arange(wave_edges[0]-wave_extend,wave_edges[1]+wave_extend,dwave) #nm
+        Args:
+            self.wave_lbl: spectral grid
+            self.zlay: altitudes of layer midpoints
+            self.zlev: altitudes of layer interfaces (levels)
+            self.psurf: surface pressure
+        
+        Returns:
+            self.surface: albedo profile
+            self.molec: molecular cross-section data for CH4, CO2, H2O
+            self.atm: atmospheric profile
+            self.sun_lbl: solar spectrum
 
-# Vertical layering
-dzlay= 1.E3          #geometrical thickness of the model atmosphere  
-nlay = 20            #number of layers
-nlev = nlay + 1      #number of levels
+        """
+        file_sun = self.cfg.solar_spectrum
+        file_atm = self.cfg.atm_model
 
-zlay = (np.arange(nlay-1,-1,-1)+0.5)*dzlay  #altitude of layer midpoint
-zlev = np.arange(nlev-1,-1,-1)*dzlay        #altitude of layer interfaces = levels 
+        self.sun_lbl = self.get_solar_model_spectrum(file_sun, self.wave_lbl)
+        self.atm = libRT.atmosphere_data(self.zlay, self.zlev, self.psurf)
+        self.atm.get_data_AFGL(file_atm)
 
-sza_meas = 50. 
-vza_meas = 0.
+        iso_ids=[('CH4',32),('CO2',7),('H2O',1)]   #see hapi manual  sec 6.6
+        self.molec = libRT.molecular_data(self.wave_lbl)
+        self.molec.get_data_HITRAN('../data/',iso_ids)
 
-# Observation geometry
-mu0 = np.cos(np.deg2rad(sza_meas))
-if mu0 < 0.: print("ERROR! main: solar cosine < 0; needs to be > 0 by definition.")
-muv      = np.cos(np.deg2rad(vza_meas))
+        self.surface = libRT.surface_prop(self.wave_lbl)
+        self.surface.get_albedo_flat(.2)
 
-######################################################
-# read solar reference spectrum
-file_sun = '../data/solar_spectrum_merged.dat'
-sun_lbl  = get_solar_model_spectrum(file_sun, wave_lbl)
+        return self.surface, self.molec, self.atm, self.sun_lbl
 
-######################################################
-# Read model atmosphere
-psurf = 250 #hPa
-atm = libRT.atmosphere_data(zlay, zlev, psurf)
-atm.get_data_AFGL('../data/prof.AFGL.US.std')
-#atm.get_data_ECMWF_ads_egg4('../data/ECMWF-ADS-EGG4_2016-monthly-means.nc', 6, 8., 49.)
+    def opt_properties(self):
+        """
+        Creates a struct containing optical system properties
 
-# Set path for HITRAN database operations
-######################################################
-# Download molecular absorption parameter
+        Args:
+            self.wave_lbl: spectral grid
+            self.zlay: altitudes of layer midpoints
+            self.molec: molecular cross-section data for CH4, CO2, H2O
+            self.atm: atmospheric model
+        
+        Returns:
+            self.optics: optical properties class
 
-iso_ids=[('CH4',32),('CO2',7),('H2O',1)]   #see hapi manual  sec 6.6
-#iso_ids=[('CH4',32)]   #see hapi manual  sec 6.6
-#iso_ids=[('CO2',07)]   #see hapi manual  sec 6.6
-#iso_ids=[('H2O',1)]   #see hapi manual  sec 6.6
-molec = libRT.molecular_data(wave_lbl)
-molec.get_data_HITRAN('../data/',iso_ids)
+        """
 
-# Read simulation surface properties
-surface = libRT.surface_prop(wave_lbl)
-surface.get_albedo_flat(.2)
-#surface.get_albedo_flat(0.165)
+        # Calculate optical properties
+        pklfile = self.cfg.pickle_file
+        #If pickle file exists read from file
+        #if os.path.exists(pklfile):
+        if self.recalc_xsec == True:
+            # Init class with optics.prop dictionary
+            self.optics=libRT.optic_abs_prop(self.wave_lbl, self.zlay)
+            # Rayleigh optical depth, single scattering albedo, phase function
+            # optics.cal_rayleigh(rayleigh, atm, mu0, muv, deltaphi)
+            # Molecular absorption optical properties
+            self.optics.cal_molec(self.molec, self.atm)
+            # Dump optics.prop dictionary into temporary pkl file
+            pkl.dump(self.optics.prop,open(pklfile,'wb'))
+        else:
+            # Init class with optics.prop dictionary
+            self.optics=libRT.optic_ssc_prop(self.wave_lbl, self.zlay)
+            # Read optics.prop dictionary from pickle file
+            self.optics.prop = pkl.load(open(pklfile,'rb'))
+        
+        return self.optics
 
-#check cross sections
+    def plot_transmittance(self):
+        """
+        Plots transmittance for CH4, CO2, H2O, and their combined transmittance
 
-#nu,xs = hp.absorptionCoefficient_Voigt(SourceTables='ID37_WV00753-00776', Environment={'p':pi/PSTD, 'T':Ti},WavenumberStep=nu_samp)
-######################################################
-# Calculate optical properties
-pklfile = '../tmp/optics_prop.pkl'
-#If pickle file exists read from file
-#if os.path.exists(pklfile):
-if recalc_xsec == True:
-    # Init class with optics.prop dictionary
-    optics=libRT.optic_abs_prop(wave_lbl, zlay)
-    # Rayleigh optical depth, single scattering albedo, phase function
-    # optics.cal_rayleigh(rayleigh, atm, mu0, muv, deltaphi)
-    # Molecular absorption optical properties
-    optics.cal_molec(molec, atm)
-    # Dump optics.prop dictionary into temporary pkl file
-    pkl.dump(optics.prop,open(pklfile,'wb'))
-else:
-    # Init class with optics.prop dictionary
-    optics=libRT.optic_ssc_prop(wave_lbl, zlay)
-    # Read optics.prop dictionary from pickle file
-    optics.prop = pkl.load(open(pklfile,'rb'))
+        Args:
+            self.optics: optical properties class
+            self.surface: albedo profile
+            self.mu0: cosine of solar zenith angle
+            self.muv: cosine of viewing zenith angle
+            self.fwhm: full-width half maximum
+            self.wave_lbl: line-by-line spectral grid
+            self.wave_meas: sampling spectral grid
 
-#for key in optics.prop:
-#    print(key)
-fwhm = 0.5
-samp_dist = 0.25
-wave_meas = np.arange(wave_edges[0],wave_edges[1],samp_dist)
+        
+        Returns:
+            None
 
-# Combine all optical properties to composite properties
-optics.combine('molec_32','molec_07','molec_01')
+        """
+        self.optics.combine('molec_32','molec_07','molec_01')
 
-rad_trans_tot, dev_rad = libRT.transmission(optics, surface, mu0, muv, 'molec_32')
-rad_conv_tot = slit_conv(fwhm, wave_lbl, wave_meas, rad_trans_tot)
+        rad_trans_tot, dev_rad = libRT.transmission(self.optics, self.surface, self.mu0, self.muv, 'molec_32')
+        rad_conv_tot = slit_conv(self.fwhm, self.wave_lbl, self.wave_meas, rad_trans_tot)
 
-optics.combine('molec_32')
-rad_trans_ch4 = libRT.transmission(optics, surface, mu0, muv)
-rad_conv_ch4 = slit_conv(fwhm, wave_lbl, wave_meas, rad_trans_ch4)
+        optics.combine('molec_32')
+        rad_trans_ch4 = libRT.transmission(self.optics, self.surface, self.mu0, self.muv)
+        rad_conv_ch4 = slit_conv(self.fwhm, self.wave_lbl, self.wave_meas, rad_trans_ch4)
 
-optics.combine('molec_07')
-rad_trans_co2 = libRT.transmission(optics, surface, mu0, muv)
-rad_conv_co2 = slit_conv(fwhm, wave_lbl, wave_meas, rad_trans_co2)
+        optics.combine('molec_07')
+        rad_trans_co2 = libRT.transmission(self.optics, self.surface, self.mu0, self.muv)
+        rad_conv_co2 = slit_conv(self.fwhm, self.wave_lbl, self.wave_meas, rad_trans_co2)
 
-optics.combine('molec_01')
-rad_trans_h2o = libRT.transmission(optics, surface, mu0, muv)
-rad_conv_h2o = slit_conv(fwhm, wave_lbl, wave_meas, rad_trans_h2o)
+        optics.combine('molec_01')
+        rad_trans_h2o = libRT.transmission(self.optics, self.surface, self.mu0, self.muv)
+        rad_conv_h2o = slit_conv(self.fwhm, self.wave_lbl, self.wave_meas, rad_trans_h2o)
 
-fig = plt.figure(figsize=[15, 10])
-plt.subplot(2,2,1)
-plt.plot(wave_meas, rad_conv_tot)
-plt.ylim([0.035,0.041])
-plt.title('total transmission')
+        fig = plt.figure(figsize=[15, 10])
+        plt.subplot(2,2,1)
+        plt.plot(self.wave_meas, rad_conv_tot)
+        plt.ylim([0.035,0.041])
+        plt.title('total transmission')
 
-plt.subplot(2,2,2)
-plt.plot(wave_meas,rad_conv_ch4,color = 'green')
-plt.ylim([0.035,0.041])
-plt.title('CH$_4$ transmission')
+        plt.subplot(2,2,2)
+        plt.plot(self.wave_meas,rad_conv_ch4,color = 'green')
+        plt.ylim([0.035,0.041])
+        plt.title('CH$_4$ transmission')
 
-plt.subplot(2,2,3)
-plt.plot(wave_meas,rad_conv_co2,color = 'blue')
-plt.ylim([0.035,0.041])
-plt.title('CO$_2$ transmission')
-plt.xlabel('$\lambda$ [nm]')
+        plt.subplot(2,2,3)
+        plt.plot(self.wave_meas,rad_conv_co2,color = 'blue')
+        plt.ylim([0.035,0.041])
+        plt.title('CO$_2$ transmission')
+        plt.xlabel('$\lambda$ [nm]')
 
-plt.subplot(2,2,4)
-plt.title('H$_2$O transmission')
-plt.plot(wave_meas,rad_conv_h2o,color = 'blue')
-plt.ylim([0.0409,0.04093])
-plt.xlabel('$\lambda$ [nm]')
+        plt.subplot(2,2,4)
+        plt.title('H$_2$O transmission')
+        plt.plot(self.wave_meas,rad_conv_h2o,color = 'blue')
+        plt.ylim([0.0409,0.04093])
+        plt.xlabel('$\lambda$ [nm]')
 
-plt.show()
-sys.exit()
+        plt.show()
+        sys.exit()
