@@ -136,7 +136,7 @@ class Forward:
 
         """
         # self.rad_ssc = lrt.single_scattering_LA(self.optics, self.surface, self.mu0, self.muv, self.deltaphi)
-        self.nu, self.rad = hp.radianceSpectrum(self.nu, self.coeff, Environment={'l':1000., 'T':self.cfg.temperature})
+        self.nu, self.rad = hp.radianceSpectrum(self.nu, self.coeff, Environment={'l':100000., 'T':self.cfg.temperature})
         plt.plot(self.nu, self.rad)
         plt.title("Radiance of %s" % self.molecule_name.upper())
         plt.show()
@@ -151,8 +151,20 @@ class Forward:
 
         """
         # self.rad_ssc = lrt.single_scattering_LA(self.optics, self.surface, self.mu0, self.muv, self.deltaphi)
-        self.nu, self.trans = hp.transmittanceSpectrum(self.nu, self.coeff, Environment={'l':1000., 'T':self.cfg.temperature})
+        self.nu, self.trans = hp.transmittanceSpectrum(self.nu, self.coeff, Environment={'l':100000., 'T':self.cfg.temperature})
         plt.plot(self.nu, self.trans)
         plt.title("Transmittance of %s" % self.molecule_name.upper())
         plt.show()
+
+    def convolve_spectrum(self):
+        """Convolve the transmittance spectrum over the spectral range with the instrument spectral response function,
+           and plots the result.
+
+        Args:
         
+        Returns:
+            None.
+
+        """
+        self.nu_convolved,self.trans_convolved,self.i1,self.i2,self.slit = hp.convolveSpectrum(self.nu,self.trans,SlitFunction=SLIT_DIFFRACTION,
+                                                                                               Resolution=1.0e-7,AF_wing=20.0)
