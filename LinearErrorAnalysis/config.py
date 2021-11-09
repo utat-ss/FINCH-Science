@@ -14,7 +14,7 @@ def parse_config():
     ### Forward Model
     parser.add_argument("--spectral_lower", type=float, default=1590, help='wavelength (nm)')
     parser.add_argument("--spectral_upper", type=float, default=1680, help='wavelength (nm)')
-    parser.add_argument("--fwhm", type=float, default=1.5, help='full-width half maximum for the spectral grid.')
+    parser.add_argument("--fwhm", type=float, default=4, help='full-width half maximum for the spectral grid.')
     parser.add_argument("--recalc_xsec", type=bool, default=False, help='choose whether or not to regather data from online through HAPI')
     parser.add_argument("--sza", type=float, default=50., help='solar zenith angle')
     parser.add_argument("--vza", type=float, default=0., help='viewing zenith angle')

@@ -200,7 +200,10 @@ class Forward:
 
         
         Returns:
-            None
+            self.rad_conv_tot: total radiance
+            self.rad_conv_ch4: methane radiance
+            self.rad_conv_co2: carbon dioxide radiance
+            self.rad_conv_h2o: water vapour radiance
 
         """
         self.optics.combine('molec_32','molec_07','molec_01')
@@ -244,4 +247,5 @@ class Forward:
         plt.xlabel('$\lambda$ [nm]')
 
         plt.show()
-        sys.exit()
+
+        return self.rad_conv_tot, self.rad_conv_ch4, self.rad_conv_co2, self.rad_conv_h2o
