@@ -7,10 +7,12 @@ Author(s): Adyn Miles, Shiqi Xu, Rosie Liang
 """
 
 import numpy as np
+import photon_noise
 
 class Optim:
-    def __init__(self, cfg):
+    def __init__(self, cfg, wave_meas):
         self.cfg = cfg
+        self.wave_meas = wave_meas
         
     def sys_errors(self):
         '''
@@ -39,6 +41,7 @@ class Optim:
 
         return self.sys_errors
 
+
     def rand_errors(self):
         '''
         Performs calculations on inputted random errors from config.py.
@@ -51,15 +54,16 @@ class Optim:
 
         '''
         self.area_detector = self.cfg.x_pixels * (self.cfg.pixel_pitch / 1e6) * self.cfg.y_pixels * (self.cfg.pixel_pitch / 1e6)
-        self.photon_noise = 10
+        self.photon_noise = photon_noise.photon_noise(self.cfg.fwhm)
         self.quant_noise = self.cfg.well_depth / (2**(self.cfg.dynamic_range) * np.sqrt(12))
         self.dark_current = self.cfg.dark_current * (1e-9) * (6.242e18) * (self.area_detector * 1e2 * 1e2)
         self.dark_noise = self.dark_current * self.cfg.t_int
         self.readout_noise = self.cfg.readout_noise
+        self.signal = np.power(np.asarray(self.photon_noise[0]), 2)
 
-        self.rand_error = np.sqrt((self.photon_noise)**2 + (self.quant_noise)**2 + (self.dark_noise) + self.photon_noise)
+        self.rand_error = np.sqrt(np.power(np.asarray(self.photon_noise[0]), 2) + (self.quant_noise)**2 + (self.dark_noise))
 
-        self.rand_errors = [self.rand_error, self.dark_noise, self.readout_noise, self.quant_noise, self.photon_noise]
+        self.rand_errors = [self.rand_error/self.signal, self.dark_noise/self.signal, self.readout_noise/self.signal, self.quant_noise/self.signal, self.photon_noise[0]/self.signal]
         print(self.rand_errors)
 
         return self.rand_errors

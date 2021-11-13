@@ -14,7 +14,7 @@ def parse_config():
     ### Forward Model
     parser.add_argument("--spectral_lower", type=float, default=1590, help='wavelength (nm)')
     parser.add_argument("--spectral_upper", type=float, default=1680, help='wavelength (nm)')
-    parser.add_argument("--fwhm", type=float, default=4, help='full-width half maximum for the spectral grid.')
+    parser.add_argument("--fwhm", type=float, default=1.5, help='full-width half maximum for the spectral grid.')
     parser.add_argument("--recalc_xsec", type=bool, default=False, help='choose whether or not to regather data from online through HAPI')
     parser.add_argument("--sza", type=float, default=50., help='solar zenith angle')
     parser.add_argument("--vza", type=float, default=0., help='viewing zenith angle')
@@ -47,7 +47,7 @@ def parse_config():
     # Striping
     parser.add_argument("--striping", type=float, default=0.05, help='striping distortion error')
     # Memory
-    parser.add_argument("--memory", type=float, default=0.01, help='memory effect pixel error')
+    parser.add_argument("--memory", type=float, default=0.02, help='memory effect pixel error')
 
     ### Random Error Quantification
     parser.add_argument("--x_pixels", type=int, default=512, help='number of pixels in the X direction')

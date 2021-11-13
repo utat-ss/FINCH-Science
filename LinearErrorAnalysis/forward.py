@@ -200,6 +200,7 @@ class Forward:
 
         
         Returns:
+            self.wave_meas: sampling spectral grid
             self.rad_conv_tot: total radiance
             self.rad_conv_ch4: methane radiance
             self.rad_conv_co2: carbon dioxide radiance
@@ -248,4 +249,4 @@ class Forward:
 
         plt.show()
 
-        return self.rad_conv_tot, self.rad_conv_ch4, self.rad_conv_co2, self.rad_conv_h2o
+        return self.wave_meas, self.rad_conv_tot, self.rad_conv_ch4, self.rad_conv_co2, self.rad_conv_h2o
