@@ -7,15 +7,17 @@ Author(s): Adyn Miles, Shiqi Xu, Rosie Liang
 """
 
 import numpy as np
-from config import parse_config
+
+import config
+import lib.gta_xch4 as gta_xch4
+import lib.photon_noise as pn
 from forward import Forward
-from optim import Optim
-import photon_noise
 from isrf import ISRF
+from optim import Optim
 
 if __name__ == "__main__":
     
-    cfg = parse_config()
+    cfg = config.parse_config()
 
     forward = Forward(cfg)
     surface, molec, atm, sun_lbl = forward.get_atm_params()

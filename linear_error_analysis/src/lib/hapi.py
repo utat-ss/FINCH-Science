@@ -17,25 +17,24 @@ as they are present in almost any programming language.
 Trying to retain functional style for this API. 
 '''
 
-import sys
 import json
-import os, os.path
-import re
-from os import listdir
-import numpy as np
-from numpy import zeros,array,setdiff1d,ndarray,arange
-from numpy import place,where,real,polyval
-from numpy import complex128,int64,float64,float32
-from numpy import sqrt,abs,exp,pi,log,sin,cos,tan
-from numpy import convolve
-from numpy import flipud
-from numpy.fft import fft,fftshift
-from numpy import linspace,floor
-from numpy import any,minimum,maximum
-from numpy import sort as npsort
-from bisect import bisect
-from warnings import warn,simplefilter
+import os
+import os.path
 import pydoc
+import re
+import sys
+from bisect import bisect
+from os import listdir
+from warnings import simplefilter, warn
+
+import numpy as np
+from numpy import (abs, any, arange, array, complex128, convolve, cos, exp,
+                   flipud, float32, float64, floor, int64, linspace, log,
+                   maximum, minimum, ndarray, pi, place, polyval, real,
+                   setdiff1d, sin)
+from numpy import sort as npsort
+from numpy import sqrt, tan, where, zeros
+from numpy.fft import fft, fftshift
 
 # Enable warning repetitions
 simplefilter('always', UserWarning)

@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "lea"
+version = "0.1.0"
+description = "linear error analysis to assess whether methane enhancements are visible at various spectral resolutions"
+license = "MIT"
+authors = ["Adyn Miles, Shiqi Xu, Rosie Liang"]
+
+[tool.poetry.dependencies]
+python = ">=3.7.1, <3.9"
+numpy = "^1.21.4"
+scipy = "^1.7.2"
+matplotlib = "^3.4.3"
+pandas = "^1.3.4"
+miepython = "^2.2.1"
+netCDF4 = "^1.5.8"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

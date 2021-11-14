@@ -1,6 +1,6 @@
 #!/bin/bash
 
-python main.py \
+python ./src/main.py \
 --temperature 296 \
 --pressure 1 \
 --wavelength 1580 \ 

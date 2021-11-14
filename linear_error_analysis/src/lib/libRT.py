@@ -12,16 +12,19 @@
 # class StopExecution(Exception)
 # class surface_prop()
 ###########################################################
+import bisect
+import math
 import os
 import sys
-import math
+
+import matplotlib.pyplot as plt
+import miepython as mie
+import netCDF4 as nc
 import numpy as np
 import scipy.interpolate as interpolate
-import netCDF4 as nc
-import miepython as mie
+
 import lib.hapi as hp
-import matplotlib.pyplot as plt
-import bisect
+
 ###########################################################
 # Some global constants
 hplanck = 6.62607015E-34  # Planck's constant [J/s]
