@@ -31,3 +31,7 @@ if __name__ == "__main__":
     lea = Optim(cfg, wave_meas)
     sys_errors = lea.sys_errors()
     rand_errors = lea.rand_errors()
+
+    print("FWHM:", isrf.fwhm)
+    noise_photon = pn.photon_noise(1.2)
+    print(len(noise_photon))

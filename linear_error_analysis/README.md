@@ -14,13 +14,32 @@ Fall 2021
 
 * update configs to match current state of program
 
+### `photon_noise.py`
+
+* figure out why output array has length 861
+
 ### `optim.py`
 
-* set up error covariance matrix and systematic error vectors
+* loop through photon noise - right now `S_y` (ECM) is using `photon_noise[0]` universally
 
-### `all`
+### `multiple or all`
 
+* distinguish between FWHM in nm and in cm<sup>-1</sup> (`photon_noise` specifically takes input in nm)
 * incorporate argument typing
+* add documentation in this README
+* credit Jochen for modules/excerpts of his code
+
+-----------------------------
+
+## Questions
+
+### For Jochen
+
+* [Shiqi, 2021-11-14] Why is spectral sampling distance half the FWHM? Does this have anything to do with Nyquist?
+
+### For us
+
+* [Shiqi, 2021-11-14] Why is `len(photon_noise)` 861? Double check what indexes the array
 
 -----------------------------
 
@@ -30,7 +49,7 @@ Fall 2021
 
 Paragraph
 
-Paragraph
+(This is a template)
 
 -----------------------------
 

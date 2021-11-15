@@ -26,7 +26,7 @@ class Optim:
         Returns:
             self.sys_errors: an array containing [total error, non-linearity, 
                 stray light, crosstalk, flat-field, bad pixel, keystone/smile, 
-                memory, striping] estimates.
+                striping, memory] estimates.
         '''
         self.nonlinearity = self.cfg.nonlinearity
         self.stray_light = np.sqrt( (self.cfg.fo_reflectivity)**2 
@@ -52,7 +52,7 @@ class Optim:
                                 + (self.memory)**2 )
 
         self.sys_errors = [self.sys_error, self.nonlinearity, self.stray_light, 
-                           self.crosstalk, self.ffr, self.bad_pixels, self.crosstalk, 
+                           self.crosstalk, self.ffr, self.bad_pixels, 
                            self.key_smile, self.striping, self.memory]
         print(self.sys_errors)
 
@@ -102,18 +102,26 @@ class Optim:
         Returns:
             S_y: Random error covariance matrix.
         '''
-        print("TODO: Error Covariance")
+        meas_err_vector = np.full((len(self.wave_meas), 1), random_errors[0])
+        S_y = np.cov(meas_err_vector)
+
+        return S_y
 
 
-    def sys_err_vector(self, sys_errors):
+    def sys_err_vector(self, sys_errors, error_type: int):
         '''Composes delta_y error vector for systematic errors.
 
         Parameters:
             self: contains configuration details from the initialization.
             sys_errors: array containing [total error, non-linearity, stray light, 
                 crosstalk, flat-field, bad pixel, keystone/smile, memory, striping].
+            error_type: integer between 1 and 8 inclusive that indexes the type of 
+                error in self.sys_errors
 
         Returns:
             delta_y: Systematic error vector.
         '''
-        print("TODO: Systematic error vector")
+        # systematic errors assumed constant across spectral range for now
+        delta_y = np.full((len(self.wave_meas), 1), sys_errors[error_type])
+
+        return delta_y

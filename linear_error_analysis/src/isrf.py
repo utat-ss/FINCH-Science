@@ -26,6 +26,7 @@ class ISRF:
         self.cfg = cfg
 
         self.wave_edges = [self.cfg.spectral_lower, self.cfg.spectral_upper]
+
         ### Optics Information
         self.fwhm = self.cfg.fwhm
         self.samp_dist = 0.5 * self.fwhm
@@ -35,13 +36,14 @@ class ISRF:
 
     def define_isrf(self):
         """Defines instrument spectral response function based on a simple Gaussian.
+        Converts from nm to cm^(-1).
 
         Args:
-            self.cfg.fwhm: full-width-half-maximum.
-            self.wave_meas: spectral grid.
+            self.cfg.fwhm: full-width-half-maximum, in wavelength.
+            self.wave_meas: spectral grid, in wavelength.
         
         Returns:
-            self.isrf: the isrf curve.
+            self.isrf: the isrf curve, in wavenumber.
         """
         self.wave_meas = 1e7/(self.wave_meas)
         self.wave_meas = np.flip(self.wave_meas)
