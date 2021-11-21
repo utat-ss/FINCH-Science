@@ -95,7 +95,7 @@ def parse_config():
                         help='well depth for the detector (in e-)')
     parser.add_argument("--dynamic_range", type=int, default=14, 
                         help='dynamic range of sensor (in bits)')
-    parser.add_argument("--dark_current", type=int, default=50, 
+    parser.add_argument("--dark_current", type=int, default=10, 
                         help='dark current (in nA/cm^2)')
     parser.add_argument("--readout_noise", type=int, default=500, 
                         help='readout noise (in e-)')
