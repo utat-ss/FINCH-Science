@@ -10,17 +10,10 @@ Fall 2021
 
 ## TODO
 
-### `lea.sh`
-
-* update configs to match current state of program
-
-### `photon_noise.py`
-
-* figure out why output array has length 861
-
 ### `optim.py`
 
-* loop through photon noise - right now `S_y` (ECM) is using `photon_noise[0]` universally
+* update `S_y` (ECM) after clarifying `len(photon_noise)` vs `len(self.wave_meas)`
+* set up $K$ from `forward.py` output ($F$)
 
 ### `multiple or all`
 
@@ -36,10 +29,13 @@ Fall 2021
 ### For Jochen
 
 * [Shiqi, 2021-11-14] Why is spectral sampling distance half the FWHM? Does this have anything to do with Nyquist?
+* [Shiqi, 2021-11-21] Can our state vector $x$ be 1 by 1 (i.e. just total column XCH<sub>4</sub>)?
+* [Shiqi, 2021-11-21] Can we choose $x_0$ arbitrarily?
+* [Shiqi, 2021-11-21] Why is $F_i$ a function of transition wavelength $\lambda_i$?
 
 ### For us
 
-* [Shiqi, 2021-11-14] Why is `len(photon_noise)` 861? Double check what indexes the array
+* [Shiqi, 2021-11-21] For Adyn: What goes into `photon_noise.py` array length? Currently seems to be constant. Would it not be dependent on spectral res input?
 
 -----------------------------
 
