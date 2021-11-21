@@ -79,16 +79,21 @@ class Optim:
         self.dark_noise = self.dark_current * self.cfg.t_int
         self.readout_noise = self.cfg.readout_noise
         self.signal = np.power(np.asarray(self.photon_noise[0]), 2)
+        self.spec_res_series = np.arange(self.cfg.spectral_lower, self.cfg.spectral_upper, self.cfg.fwhm)
 
-        self.rand_error = np.sqrt(np.power(np.asarray(self.photon_noise[0]), 2) \
+        self.rand_error_matrix = np.zeros((len(self.spec_res_series), 5))
+
+        for i in range(0, len(self.spec_res_series)):
+            self.signal = self.photon_noise[i]**2
+            self.rand_error = np.sqrt((self.photon_noise[i]) + (self.readout_noise)**2 \
                      + (self.quant_noise)**2 + (self.dark_noise))
-
-        self.rand_errors = [self.rand_error/self.signal, self.dark_noise/self.signal, 
+            self.rand_error_matrix[i, :] = [self.rand_error/self.signal, np.sqrt(self.dark_noise)/self.signal, 
                             self.readout_noise/self.signal, self.quant_noise/self.signal, 
-                            self.photon_noise[0]/self.signal]
-        print(self.rand_errors)
+                            self.photon_noise[i]/self.signal]
 
-        return self.rand_errors
+        print(self.rand_error_matrix)
+
+        return self.rand_error_matrix
 
 
     def error_covariance(self, random_errors):
