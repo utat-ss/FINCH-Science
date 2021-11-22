@@ -15,7 +15,7 @@ def photon_noise(fwhm):
         self.cfg.fwhm: spectral_resolution.
 
     Returns:
-        self.photon_noise: photon noise.
+        self.photon_noise: photon noise, in units of [CLARIFY TODO].
     '''
     if fwhm > 0.0 and fwhm <= 1.0:
         photon_noise = [2122.79721329, 2004.33400063, 1987.70830837, 2005.61459961, 2104.52974022,

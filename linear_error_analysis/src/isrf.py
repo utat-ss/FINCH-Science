@@ -34,7 +34,7 @@ class ISRF:
                                    self.samp_dist)
 
 
-    def define_isrf(self):
+    def define_isrf(self, show_fig=True):
         """Defines instrument spectral response function based on a simple Gaussian.
         Converts from nm to cm^(-1).
 
@@ -53,12 +53,13 @@ class ISRF:
 
         plt.plot(self.wave_meas, self.isrf)
         plt.title("Instrument Spectral Response Function")
-        plt.show()
+        if show_fig == True:
+            plt.show()
 
         return self.isrf
 
 
-    def convolve_isrf(self, transmittance):
+    def convolve_isrf(self, transmittance, show_fig=True):
         """Convolve instrument spectral response function with forward model 
         transmittance.
 
@@ -75,6 +76,7 @@ class ISRF:
 
         plt.plot(self.wave_meas, self.isrf_conv)
         plt.title("ISRF Convolved with forward model response")
-        plt.show()
+        if show_fig == True:
+            plt.show()
 
         return self.isrf_conv

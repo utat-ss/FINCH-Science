@@ -57,7 +57,8 @@ def known_gta_xch4(save_fig=False) -> Tuple[float, float]:
     print("Std Dev:", stdev_xch4)
 
     if save_fig == True:
-        path_plot = os.path.join(path_root, "plots", "GTA_XCH4_2018-19_hist.png")
+        path_plot = os.path.join(path_root, "outputs", "plots", 
+                                 "GTA_XCH4_2018-19_hist.png")
         plt.savefig(path_plot, facecolor="white")
         plt.close()
 

@@ -119,6 +119,7 @@ class Forward:
 
         return(self.rad_conv)
 
+
     def get_atm_params(self):
         """Gets solar model, molecular cross-section information, 
         surface albedo properties.
@@ -186,7 +187,7 @@ class Forward:
         return self.optics
 
 
-    def plot_transmittance(self):
+    def plot_transmittance(self, show_fig=True):
         """Plots CH4, CO2, H2O transmittances, as well as their combined transmittance.
 
         Args:
@@ -226,30 +227,32 @@ class Forward:
                                 self.optics, self.surface, self.mu0, self.muv)
         self.rad_conv_h2o = self.slit_conv(self.rad_trans_h2o)
 
-        fig = plt.figure(figsize=[15, 10])
-        plt.subplot(2, 2, 1)
-        plt.plot(self.wave_meas, self.rad_conv_tot)
-        plt.ylim([0.035, 0.041])
-        plt.title('total transmission')
+        if show_fig == True:
+            fig = plt.figure(figsize=[15, 10])
 
-        plt.subplot(2, 2, 2)
-        plt.plot(self.wave_meas, self.rad_conv_ch4, color = 'green')
-        plt.ylim([0.035, 0.041])
-        plt.title('CH$_4$ transmission')
+            plt.subplot(2, 2, 1)
+            plt.plot(self.wave_meas, self.rad_conv_tot)
+            plt.ylim([0.035, 0.041])
+            plt.title('total transmission')
 
-        plt.subplot(2, 2, 3)
-        plt.plot(self.wave_meas, self.rad_conv_co2, color = 'orange')
-        plt.ylim([0.035, 0.041])
-        plt.title('CO$_2$ transmission')
-        plt.xlabel('$\lambda$ [nm]')
+            plt.subplot(2, 2, 2)
+            plt.plot(self.wave_meas, self.rad_conv_ch4, color = 'green')
+            plt.ylim([0.035, 0.041])
+            plt.title('CH$_4$ transmission')
 
-        plt.subplot(2, 2, 4)
-        plt.title('H$_2$O transmission')
-        plt.plot(self.wave_meas, self.rad_conv_h2o, color = 'red')
-        plt.ylim([0.0409, 0.04093])
-        plt.xlabel('$\lambda$ [nm]')
+            plt.subplot(2, 2, 3)
+            plt.plot(self.wave_meas, self.rad_conv_co2, color = 'orange')
+            plt.ylim([0.035, 0.041])
+            plt.title('CO$_2$ transmission')
+            plt.xlabel('$\lambda$ [nm]')
 
-        plt.show()
+            plt.subplot(2, 2, 4)
+            plt.title('H$_2$O transmission')
+            plt.plot(self.wave_meas, self.rad_conv_h2o, color = 'red')
+            plt.ylim([0.0409, 0.04093])
+            plt.xlabel('$\lambda$ [nm]')
+
+            plt.show()
 
         return self.wave_meas, self.rad_conv_tot, self.rad_conv_ch4, \
                self.rad_conv_co2, self.rad_conv_h2o

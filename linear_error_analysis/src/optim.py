@@ -45,9 +45,9 @@ class Optim:
 
         self.sys_error = np.sqrt( (self.nonlinearity)**2
                                 + (self.stray_light)**2
+                                + (self.crosstalk)**2
                                 + (self.ffr)**2
                                 + (self.bad_pixels)**2
-                                + (self.crosstalk)**2
                                 + (self.key_smile)**2
                                 + (self.striping)**2
                                 + (self.memory)**2 )
@@ -96,13 +96,13 @@ class Optim:
         # which is the dark noise added in quadrature, hence no **2
         self.rand_error = np.sqrt(self.signal + self.readout_noise**2 \
                      + self.quant_noise**2 + self.dark_noise)
+
         for i in range(len(self.wave_meas)):
             self.rand_error_matrix[i, :] = [self.rand_error[i]/self.signal[i], 
                                 np.sqrt(self.dark_noise)/self.signal[i], 
                                 self.readout_noise/self.signal[i], 
                                 self.quant_noise/self.signal[i], 
                                 self.photon_noise_interp[i]/self.signal[i]]
-
         print(self.rand_error_matrix)
 
         return self.rand_error_matrix
@@ -124,6 +124,13 @@ class Optim:
         # systematic errors assumed constant across spectral range for now
         delta_y = np.full((len(self.wave_meas), 1), self.sys_errors[error_type])
 
+        sys_error_types = ["total", "non-linearity", "stray light", "cross-talk", 
+            "flat-field", "bad pixel", "smile/keystone", "striping", "memory effect"]
+
+        print("\n" + sys_error_types[error_type] + "systematic error:")
+        print(delta_y)
+        print()
+
         return delta_y
 
 
@@ -140,8 +147,10 @@ class Optim:
         '''
         meas_err_vector = np.array([band[0] for band in self.rand_error_matrix])
         meas_err_vector = np.transpose(meas_err_vector[np.newaxis])
+        # print(meas_err_vector)
 
-        S_y = np.cov(meas_err_vector)
+        S_y = np.cov(meas_err_vector, bias=True)
         # print(S_y.shape)
+        print(S_y)
 
         return S_y
