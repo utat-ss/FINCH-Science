@@ -7,6 +7,7 @@ Author(s): Adyn Miles, Shiqi Xu, Rosie Liang
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 import config
 import lib.gta_xch4 as gta_xch4
@@ -31,3 +32,16 @@ if __name__ == "__main__":
     lea = Optim(cfg, wave_meas)
     sys_errors = lea.sys_errors()
     rand_errors = lea.rand_errors()
+    # sys_error_1 = lea.sys_err_vector(1)
+    # sys_error_2 = lea.sys_err_vector(2)
+    # sys_error_3 = lea.sys_err_vector(3)
+    # sys_error_4 = lea.sys_err_vector(4)
+    # sys_error_5 = lea.sys_err_vector(5)
+    # sys_error_6 = lea.sys_err_vector(6)
+    # sys_error_7 = lea.sys_err_vector(7)
+    # sys_error_8 = lea.sys_err_vector(8)
+    ecm = lea.error_covariance()
+
+    # plot interpolated photon noise
+    plt.plot(lea.wave_meas, lea.photon_noise_interp)
+    plt.show()

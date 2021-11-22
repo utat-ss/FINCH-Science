@@ -7,6 +7,7 @@ Author(s): Adyn Miles, Shiqi Xu, Rosie Liang
 """
 
 import numpy as np
+import scipy.interpolate as interp
 
 import lib.photon_noise as pn
 
@@ -62,6 +63,9 @@ class Optim:
     def rand_errors(self):
         '''Performs calculations on inputted random errors from config.py.
 
+        See SNR Analysis Confluence page for breakdown of types of random error:
+        http://spacesys.utat.ca/confluence/display/FIN/Signal-to-Noise+Ratio+Analysis
+
         Args:
             self: contains configuration details from the initialization.
 
@@ -71,58 +75,37 @@ class Optim:
         '''
         self.area_detector = self.cfg.x_pixels * (self.cfg.pixel_pitch / 1e6) \
                      * self.cfg.y_pixels * (self.cfg.pixel_pitch / 1e6)
-        self.photon_noise = pn.photon_noise(self.cfg.fwhm)
+        self.photon_noise = np.array(pn.photon_noise(self.cfg.fwhm))
         self.quant_noise = self.cfg.well_depth / (2**(self.cfg.dynamic_range) \
                      * np.sqrt(12))
         self.dark_current = self.cfg.dark_current * (1e-9) * (6.242e18) \
                      * (self.area_detector * 1e2 * 1e2)
         self.dark_noise = self.dark_current * self.cfg.t_int
         self.readout_noise = self.cfg.readout_noise
-        self.spec_res_series = np.arange(self.cfg.spectral_lower, 
-                                         self.cfg.spectral_upper, self.cfg.fwhm)
 
-        self.rand_error_matrix = np.zeros((len(self.spec_res_series), 5))
+        self.rand_error_matrix = np.zeros((len(self.wave_meas), 5), dtype=object)
 
-        for i in range(0, len(self.spec_res_series)):
-            self.signal = self.photon_noise[i]**2
-            self.rand_error = np.sqrt((self.signal) + (self.readout_noise)**2 \
-                     + (self.quant_noise)**2 + (self.dark_noise))
-            self.rand_error_matrix[i, :] = [self.rand_error/self.signal, 
-                                            np.sqrt(self.dark_noise)/self.signal, 
-                                            self.readout_noise/self.signal, 
-                                            self.quant_noise/self.signal, 
-                                            self.photon_noise[i]/self.signal]
+        # interpolate self.photon_noise to match self.wave_meas grid
+        spec_res_series = np.arange(self.cfg.spectral_lower, 
+                                    self.cfg.spectral_upper, self.cfg.fwhm)
+        pn_func = interp.interp1d(spec_res_series, self.photon_noise, 
+                                  fill_value="extrapolate")     # linear
+        self.photon_noise_interp = pn_func(self.wave_meas)
+        self.signal = self.photon_noise_interp**2
+        # note: self.dark_noise is standard deviation of the dark signal squared
+        # which is the dark noise added in quadrature, hence no **2
+        self.rand_error = np.sqrt(self.signal + self.readout_noise**2 \
+                     + self.quant_noise**2 + self.dark_noise)
+        for i in range(len(self.wave_meas)):
+            self.rand_error_matrix[i, :] = [self.rand_error[i]/self.signal[i], 
+                                np.sqrt(self.dark_noise)/self.signal[i], 
+                                self.readout_noise/self.signal[i], 
+                                self.quant_noise/self.signal[i], 
+                                self.photon_noise_interp[i]/self.signal[i]]
 
         print(self.rand_error_matrix)
 
         return self.rand_error_matrix
-
-
-    def error_covariance(self):
-        '''Composes Sy error covariance matrix for random errors.
-
-        NOTE (TODO): len(self.wave_meas) is double len(rand_err_matrix), and here
-        random error elements were doubled up in order to create an ECM that
-        corresponds to a random error array of len(self.wave_meas).
-
-        Args:
-            self: contains configuration details from the initialization.
-            self.rand_error_matrix: array containing [total error, dark current, 
-                readout, quantization, photon noise] by spectral band.
-
-        Returns:
-            S_y: Random error covariance matrix.
-        '''
-        meas_err_vector = np.array()
-        for i in range(len(self.wave_meas)):
-            meas_err_vector = np.append(meas_err_vector, 
-                                        self.rand_error_matrix[np.floor(i/2)][0])
-        # # if going with len(rand_err_matrix) and not len(self.wave_meas), use this
-        # meas_err_vector = np.array([band[0] for band in self.rand_error_matrix])
-
-        S_y = np.cov(meas_err_vector)
-
-        return S_y
 
 
     def sys_err_vector(self, error_type: int):
@@ -142,3 +125,23 @@ class Optim:
         delta_y = np.full((len(self.wave_meas), 1), self.sys_errors[error_type])
 
         return delta_y
+
+
+    def error_covariance(self):
+        '''Composes Sy error covariance matrix for random errors.
+
+        Args:
+            self: contains configuration details from the initialization.
+            self.rand_error_matrix: array containing [total error, dark current, 
+                readout, quantization, photon noise] by spectral band.
+
+        Returns:
+            S_y: Random error covariance matrix.
+        '''
+        meas_err_vector = np.array([band[0] for band in self.rand_error_matrix])
+        meas_err_vector = np.transpose(meas_err_vector[np.newaxis])
+
+        S_y = np.cov(meas_err_vector)
+        # print(S_y.shape)
+
+        return S_y
