@@ -1,7 +1,8 @@
 """
-optim.py  
+errors.py  
 
-Sets up equations and runs optimization for the LEA program.
+Collects all sources of random and systematic errors
+and sets them up appropriately for the LEA program.
 
 Author(s): Adyn Miles, Shiqi Xu, Rosie Liang
 """
