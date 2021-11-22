@@ -10,9 +10,12 @@ Fall 2021
 
 ## TODO
 
-### `optim.py`
+### `errors.py`
 
 * debug ECM ($S_y$) - currently outputting all `NaN` when `bias=True` in `np.cov()` and all `0` when `bias=False`
+
+### `optim.py`
+
 * set up $K$ from `forward.py` output ($F$)
 
 ### `general`
