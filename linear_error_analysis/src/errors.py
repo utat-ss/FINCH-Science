@@ -12,7 +12,7 @@ import scipy.interpolate as interp
 
 import lib.photon_noise as pn
 
-class Optim:
+class Errors:
 
     def __init__(self, cfg, wave_meas):
         self.cfg = cfg

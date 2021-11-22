@@ -18,7 +18,7 @@ import lib.gta_xch4 as gta_xch4
 import lib.photon_noise as pn
 from forward import Forward
 from isrf import ISRF
-from optim import Optim
+from errors import Errors
 
 if __name__ == "__main__":
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     isrf_conv = isrf.convolve_isrf(rad_tot, show_fig=False)
 
 
-    lea = Optim(cfg, wave_meas)
+    lea = Errors(cfg, wave_meas)
     sys_errors = lea.sys_errors()
     rand_errors = lea.rand_errors()
 
