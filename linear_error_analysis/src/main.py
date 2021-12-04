@@ -19,6 +19,7 @@ import lib.photon_noise as pn
 from forward import Forward
 from isrf import ISRF
 from errors import Errors
+from optim import Optim
 
 if __name__ == "__main__":
 
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     forward = Forward(cfg)
     surface, molec, atm, sun_lbl = forward.get_atm_params()
     optics = forward.opt_properties()
-    wave_meas, rad_tot, rad_ch4, rad_co2, rad_h2o = forward.plot_transmittance(
+    wave_meas, rad_tot, rad_ch4, rad_co2, rad_h2o, d_rad_tot = forward.plot_transmittance(
         show_fig=False)
 
 
@@ -53,6 +54,10 @@ if __name__ == "__main__":
     ecm = lea.error_covariance()
     path_root = os.path.dirname(os.path.dirname(__file__))
     np.savetxt(os.path.join(path_root, "outputs", "ecm.csv"), ecm, delimiter=",")
+
+    optim = Optim(cfg, wave_meas)
+    jacobian = optim.jacobian(d_rad_tot, show_fig=False)
+    gain = optim.gain(ecm)
 
 
     # plot interpolated photon noise

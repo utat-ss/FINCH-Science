@@ -208,23 +208,23 @@ class Forward:
         """
         self.optics.combine('molec_32', 'molec_07', 'molec_01')
 
-        self.rad_trans_tot, self.dev_rad = libRT.transmission(
-                    self.optics, self.surface, self.mu0, self.muv, 'molec_32')
+        self.rad_trans_tot = libRT.transmission(
+                    self.optics, self.surface, self.mu0, self.muv)
         self.rad_conv_tot = self.slit_conv(self.rad_trans_tot)
 
         self.optics.combine('molec_32')
-        self.rad_trans_ch4 = libRT.transmission(
-                                self.optics, self.surface, self.mu0, self.muv)
+        self.rad_trans_ch4, self.dev_ch4 = libRT.transmission(
+                                self.optics, self.surface, self.mu0, self.muv, 'molec_32')
         self.rad_conv_ch4 = self.slit_conv(self.rad_trans_ch4)
 
         self.optics.combine('molec_07')
-        self.rad_trans_co2 = libRT.transmission(
-                                self.optics, self.surface, self.mu0, self.muv)
+        self.rad_trans_co2, self.dev_co2 = libRT.transmission(
+                                self.optics, self.surface, self.mu0, self.muv, 'molec_07')
         self.rad_conv_co2 = self.slit_conv(self.rad_trans_co2)
 
         self.optics.combine('molec_01')
-        self.rad_trans_h2o = libRT.transmission(
-                                self.optics, self.surface, self.mu0, self.muv)
+        self.rad_trans_h2o, self.dev_h2o = libRT.transmission(
+                                self.optics, self.surface, self.mu0, self.muv, 'molec_01')
         self.rad_conv_h2o = self.slit_conv(self.rad_trans_h2o)
 
         if show_fig == True:
@@ -255,4 +255,5 @@ class Forward:
             plt.show()
 
         return self.wave_meas, self.rad_conv_tot, self.rad_conv_ch4, \
-               self.rad_conv_co2, self.rad_conv_h2o
+               self.rad_conv_co2, self.rad_conv_h2o, self.dev_ch4,   \
+               self.dev_co2, self.dev_h2o
