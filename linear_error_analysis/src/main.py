@@ -29,7 +29,7 @@ if __name__ == "__main__":
     forward = Forward(cfg)
     surface, molec, atm, sun_lbl = forward.get_atm_params()
     optics = forward.opt_properties()
-    wave_meas, rad_tot, rad_ch4, rad_co2, rad_h2o, d_rad_tot = forward.plot_transmittance(
+    wave_meas, rad_tot, rad_ch4, rad_co2, rad_h2o, d_rad_ch4, d_rad_co2, d_rad_h2o = forward.plot_transmittance(
         show_fig=False)
 
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     np.savetxt(os.path.join(path_root, "outputs", "ecm.csv"), ecm, delimiter=",")
 
     optim = Optim(cfg, wave_meas)
-    jacobian = optim.jacobian(d_rad_tot, show_fig=False)
+    jacobian = optim.jacobian(d_rad_ch4, d_rad_co2, d_rad_h2o, show_fig=False)
     gain = optim.gain(ecm)
 
 

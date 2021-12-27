@@ -255,5 +255,5 @@ class Forward:
             plt.show()
 
         return self.wave_meas, self.rad_conv_tot, self.rad_conv_ch4, \
-               self.rad_conv_co2, self.rad_conv_h2o, self.dev_ch4,   \
+               self.rad_conv_co2, self.rad_conv_h2o, self.dev_ch4, \
                self.dev_co2, self.dev_h2o

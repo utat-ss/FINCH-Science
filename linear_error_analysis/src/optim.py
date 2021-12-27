@@ -34,22 +34,22 @@ class Optim:
         Returns:
             K: instrument spectral response function convolved with the spectral response.
         '''
-        self.wave_meas, self.d_isrf_conv_1, i1, i2, slit = hp.convolveSpectrum(
+        self.wave_meas_1, self.d_isrf_conv_1, i1, i2, slit = hp.convolveSpectrum(
                     self.wave_meas, dev_ch4, 
                     SlitFunction=hp.SLIT_DIFFRACTION, Resolution=self.cfg.fwhm)
 
-        self.wave_meas, self.d_isrf_conv_2, i1, i2, slit = hp.convolveSpectrum(
+        self.wave_meas_2, self.d_isrf_conv_2, i1, i2, slit = hp.convolveSpectrum(
                     self.wave_meas, dev_co2, 
                     SlitFunction=hp.SLIT_DIFFRACTION, Resolution=self.cfg.fwhm)
 
-        self.wave_meas, self.d_isrf_conv_3, i1, i2, slit = hp.convolveSpectrum(
+        self.wave_meas_3, self.d_isrf_conv_3, i1, i2, slit = hp.convolveSpectrum(
                     self.wave_meas, dev_h2o, 
                     SlitFunction=hp.SLIT_DIFFRACTION, Resolution=self.cfg.fwhm)            
 
-        self.K = np.zeros((len(self.wave_meas), 3))
-        self.K[:, 1] = self.d_isrf_conv_1
-        self.K[:, 2] = self.d_isrf_conv_2
-        self.K[:, 3] = self.d_isrf_conv_3
+        self.K = np.zeros((len(self.wave_meas_1), 3))
+        self.K[:, 0] = self.d_isrf_conv_1
+        self.K[:, 1] = self.d_isrf_conv_2
+        self.K[:, 2] = self.d_isrf_conv_3
         
         return self.K
 
