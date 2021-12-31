@@ -30,6 +30,7 @@ class ISRF:
         ### Optics Information
         self.fwhm = self.cfg.fwhm
         self.samp_dist = 0.5 * self.fwhm
+        self.wave_extend = 5
         self.wave_meas = np.arange(self.wave_edges[0], self.wave_edges[1], 
                                    self.samp_dist)
 

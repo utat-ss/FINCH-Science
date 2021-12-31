@@ -257,3 +257,27 @@ class Forward:
         return self.wave_meas, self.rad_conv_tot, self.rad_conv_ch4, \
                self.rad_conv_co2, self.rad_conv_h2o, self.dev_ch4, \
                self.dev_co2, self.dev_h2o
+
+    def produce_state_vec(self):
+        """
+        Produces the state vector.
+
+        [
+            CH4 column concentration
+            H2O column concentration
+            CO2 column concentration
+            Surface Albedo
+        ]
+
+        Args:
+            self.rad_conv_ch4: methane radiance
+            self.rad_conv_co2: carbon dioxide radiance
+            self.rad_conv_h2o: water vapour radiance
+            scaling_factor: the column concentrations are scaled by some factor 
+
+        Returns:
+            x_0: state vector
+
+        """
+
+        

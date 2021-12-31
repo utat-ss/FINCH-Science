@@ -31,6 +31,7 @@ if __name__ == "__main__":
     optics = forward.opt_properties()
     wave_meas, rad_tot, rad_ch4, rad_co2, rad_h2o, d_rad_ch4, d_rad_co2, d_rad_h2o = forward.plot_transmittance(
         show_fig=False)
+    state_vector = forward.produce_state_vec()
 
 
     isrf = ISRF(cfg)
@@ -58,6 +59,8 @@ if __name__ == "__main__":
     optim = Optim(cfg, wave_meas)
     jacobian = optim.jacobian(d_rad_ch4, d_rad_co2, d_rad_h2o, show_fig=False)
     gain = optim.gain(ecm)
+    modified_state_vector = optim.modify_state_vector(state_vector, isrf_conv, ecm)
+    states = optim.state_estimate(ecm, modified_state_vector, sys_errors)
 
 
     # plot interpolated photon noise

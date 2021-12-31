@@ -151,8 +151,9 @@ class Errors:
         # spectral_grid = np.transpose(self.wave_meas[np.newaxis])
         # meas_err = np.vstack((self.wave_meas, meas_err_vector))
         # print(meas_err_vector)
+        S_y = np.diag(meas_err_vector)
 
-        S_y = np.cov((self.wave_meas, meas_err_vector) , bias=True)
+        # S_y = np.cov((self.wave_meas, meas_err_vector) , bias=True)
         # print(S_y.shape)
         print(S_y)
 
