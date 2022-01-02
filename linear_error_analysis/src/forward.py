@@ -254,8 +254,8 @@ class Forward:
 
             plt.show()
 
-        return self.wave_meas, self.rad_conv_tot, self.rad_conv_ch4, \
-               self.rad_conv_co2, self.rad_conv_h2o, self.dev_ch4, \
+        return self.wave_meas, self.rad_trans_tot, self.rad_trans_ch4, \
+               self.rad_trans_co2, self.rad_trans_h2o, self.dev_ch4, \
                self.dev_co2, self.dev_h2o
 
     def produce_state_vec(self):
@@ -279,5 +279,6 @@ class Forward:
             x_0: state vector
 
         """
-
+        x_0 = np.asarray([1.87, 0, 0])
+        return x_0
         

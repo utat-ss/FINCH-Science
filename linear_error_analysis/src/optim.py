@@ -112,11 +112,7 @@ class Optim:
             x_est: spectral resolution estimate
             S_x: signal to noise ratio estimate
         '''
-        x_est = self.G*y
+        x_est = np.matmul(self.G, y)
         S_x = np.matmul(self.G, np.matmul(S_y, np.transpose(self.G)))
 
         return x_est, S_x
-
-
-
-

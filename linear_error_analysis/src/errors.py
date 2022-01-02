@@ -147,14 +147,6 @@ class Errors:
             S_y: Random error covariance matrix.
         '''
         meas_err_vector = np.array([band[0] for band in self.rand_error_matrix])
-        # meas_err_vector = np.transpose(meas_err_vector[np.newaxis])
-        # spectral_grid = np.transpose(self.wave_meas[np.newaxis])
-        # meas_err = np.vstack((self.wave_meas, meas_err_vector))
-        # print(meas_err_vector)
-        S_y = np.diag(meas_err_vector)
-
-        # S_y = np.cov((self.wave_meas, meas_err_vector) , bias=True)
-        # print(S_y.shape)
-        print(S_y)
+        S_y = np.diag(np.square(meas_err_vector))
 
         return S_y

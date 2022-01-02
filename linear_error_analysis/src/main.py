@@ -60,12 +60,16 @@ if __name__ == "__main__":
     jacobian = optim.jacobian(d_rad_ch4, d_rad_co2, d_rad_h2o, show_fig=False)
     gain = optim.gain(ecm)
     modified_state_vector = optim.modify_state_vector(state_vector, isrf_conv, ecm)
-    states = optim.state_estimate(ecm, modified_state_vector, sys_errors)
+    spectral_res, snr = optim.state_estimate(ecm, modified_state_vector, sys_errors)
+
+    print('Spectral Resolution: ' + str(spectral_res))
+    print('Signal to Noise Ratio: ' + str(snr))
+
 
 
     # plot interpolated photon noise
-    plt.plot(lea.wave_meas, lea.photon_noise_interp)
-    plt.title("Interpolated Photon Noise")
-    plt.xlabel("Wavelength (nm)")
-    plt.ylabel("Photon Noise (UNITS?)")    # TODO
+    # plt.plot(lea.wave_meas, lea.photon_noise_interp)
+    # plt.title("Interpolated Photon Noise")
+    # plt.xlabel("Wavelength (nm)")
+    # plt.ylabel("Photon Noise (UNITS?)")    # TODO
     # plt.show()
