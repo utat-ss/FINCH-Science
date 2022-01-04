@@ -33,8 +33,11 @@ Fall 2021
 * [Shiqi, 2021-11-21] Can our state vector $x$ be 1 by 1 (i.e. just total column XCH<sub>4</sub>)?
 * [Shiqi, 2021-11-21] Can we choose $x_0$ arbitrarily?
 * [Shiqi, 2021-11-21] Why is $F_i$ a function of transition wavelength $\lambda_i$?
+* [Adyn, 2022-01-03] What are the units of the items in the state vector? What specifically goes into that vector?
+* [Adyn, 2022-01-03] What goes into the measurement vector? What is the e Poisson noise vector?
 
 ### For us
+* [Adyn, 2022-01-03] What is the difference between slit_conv and convolve_Spectrum functions? 
 
 
 
