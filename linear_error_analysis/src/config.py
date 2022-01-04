@@ -22,7 +22,8 @@ def parse_config():
     parser.add_argument("--spectral_upper", type=float, default=1680, 
                         help='wavelength (nm)')
     parser.add_argument("--fwhm", type=float, default=1.5, 
-                        help='full-width half maximum for the spectral grid.')
+                        help='full-width half maximum for the spectral grid. Must \
+                            be a multiple of 0.5 between 1.0 and 4.0')
     parser.add_argument("--recalc_xsec", type=bool, default=False, 
                         help='choose whether or not to regather data \
                             from online through HAPI')

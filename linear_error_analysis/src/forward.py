@@ -1,7 +1,8 @@
 """
 forward.py
 
-Generates forward model spectrum for methane, carbon dioxide, and water vapour.
+Generates forward model spectrum, derivatives, and convolution with 
+instrument spectral response function for methane, carbon dioxide, and water vapour.
 
 Author(s): Jochen Landgraf, Adyn Miles, Shiqi Xu, Rosie Liang
 """
@@ -95,7 +96,8 @@ class Forward:
 
 
     def slit_conv(self, rad_lbl):
-        """[TODO description]
+        """ Convolution of the forward model response with the 
+        instrument spectral response function.
 
         Args:
             self.fwhm: full width half maximum (spectral resolution).
@@ -104,7 +106,7 @@ class Forward:
             rad_lbl: line-by-line radiance.
         
         Returns:
-            self.rad_conv: [TODO]
+            self.rad_conv: input radiance convolved with instrument response function.
         """
         dmeas = self.wave_meas.size
         dlbl  = self.wave_lbl.size
@@ -216,16 +218,19 @@ class Forward:
         self.rad_trans_ch4, self.dev_ch4 = libRT.transmission(
                                 self.optics, self.surface, self.mu0, self.muv, 'molec_32')
         self.rad_conv_ch4 = self.slit_conv(self.rad_trans_ch4)
+        self.dev_conv_ch4 = self.slit_conv(self.dev_ch4)
 
         self.optics.combine('molec_07')
         self.rad_trans_co2, self.dev_co2 = libRT.transmission(
                                 self.optics, self.surface, self.mu0, self.muv, 'molec_07')
         self.rad_conv_co2 = self.slit_conv(self.rad_trans_co2)
+        self.dev_conv_co2 = self.slit_conv(self.dev_co2)
 
         self.optics.combine('molec_01')
         self.rad_trans_h2o, self.dev_h2o = libRT.transmission(
                                 self.optics, self.surface, self.mu0, self.muv, 'molec_01')
         self.rad_conv_h2o = self.slit_conv(self.rad_trans_h2o)
+        self.dev_conv_h2o = self.slit_conv(self.dev_h2o)
 
         if show_fig == True:
             fig = plt.figure(figsize=[15, 10])
@@ -256,7 +261,9 @@ class Forward:
 
         return self.wave_meas, self.rad_trans_tot, self.rad_trans_ch4, \
                self.rad_trans_co2, self.rad_trans_h2o, self.dev_ch4, \
-               self.dev_co2, self.dev_h2o
+               self.dev_co2, self.dev_h2o, self.rad_conv_tot, \
+               self.rad_conv_ch4, self.rad_conv_co2, self.rad_conv_h2o, \
+               self.dev_conv_ch4, self.dev_conv_co2, self.dev_conv_h2o  
 
     def produce_state_vec(self):
         """
@@ -279,6 +286,6 @@ class Forward:
             x_0: state vector
 
         """
-        x_0 = np.asarray([1.87, 0, 0])
+        x_0 = np.asarray([1.87, 420, 50000])
         return x_0
         

@@ -25,11 +25,10 @@ if __name__ == "__main__":
 
     cfg = config.parse_config()
 
-
     forward = Forward(cfg)
     surface, molec, atm, sun_lbl = forward.get_atm_params()
     optics = forward.opt_properties()
-    wave_meas, rad_tot, rad_ch4, rad_co2, rad_h2o, d_rad_ch4, d_rad_co2, d_rad_h2o = forward.plot_transmittance(
+    wave_meas, rad_tot, rad_ch4, rad_co2, rad_h2o, d_rad_ch4, d_rad_co2, d_rad_h2o, rad_conv_tot, rad_conv_ch4, rad_conv_co2, rad_conv_h2o, dev_conv_ch4, dev_conv_co2, dev_conv_h2o = forward.plot_transmittance(
         show_fig=False)
     state_vector = forward.produce_state_vec()
 
@@ -57,13 +56,13 @@ if __name__ == "__main__":
     np.savetxt(os.path.join(path_root, "outputs", "ecm.csv"), ecm, delimiter=",")
 
     optim = Optim(cfg, wave_meas)
-    jacobian = optim.jacobian(d_rad_ch4, d_rad_co2, d_rad_h2o, show_fig=False)
+    jacobian = optim.jacobian(dev_conv_ch4, dev_conv_co2, dev_conv_h2o, show_fig=False)
     gain = optim.gain(ecm)
-    modified_state_vector = optim.modify_state_vector(state_vector, isrf_conv, ecm)
-    spectral_res, snr = optim.state_estimate(ecm, modified_state_vector, sys_errors)
+    modified_meas_vector = optim.modify_meas_vector(state_vector, rad_conv_tot, ecm)
+    spectral_res, snr = optim.state_estimate(ecm, modified_meas_vector, sys_errors)
 
-    print('Spectral Resolution: ' + str(spectral_res))
-    print('Signal to Noise Ratio: ' + str(snr))
+    print('Estimated Solution: ' + str(spectral_res))
+    print('Uncertainty of Solution: ' + str(snr))
 
 
 

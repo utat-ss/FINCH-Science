@@ -90,7 +90,7 @@ class Errors:
         spec_res_series = np.arange(self.cfg.spectral_lower, 
                                     self.cfg.spectral_upper, self.cfg.fwhm)
         pn_func = interp.interp1d(spec_res_series, self.photon_noise, 
-                                  fill_value="extrapolate")     # linear
+                                fill_value="extrapolate")     # linear
         self.photon_noise_interp = pn_func(self.wave_meas)
         self.signal = self.photon_noise_interp**2
         # note: self.dark_noise is standard deviation of the dark signal squared
