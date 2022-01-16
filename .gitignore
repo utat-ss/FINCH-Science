@@ -1,7 +1,7 @@
 # custom
 *.zip
 .vscode/
-linear_error_analysis/tests/random_scatch.py
+random_scatch.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

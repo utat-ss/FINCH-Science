@@ -1,6 +1,6 @@
 import numpy as np
 
-'''
+"""
 # horizontal vector
 print(np.full((1, 20), 2))
 
@@ -17,7 +17,6 @@ print(np.transpose(a))
 print(a[np.newaxis])
 print(a[np.newaxis].shape)
 print(np.transpose(a[np.newaxis]))
-'''
+"""
 
-print(np.cov([[1,2],[3,4],[5,6]]))
-
+print(np.cov([[1, 2], [3, 4], [5, 6]]))
