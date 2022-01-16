@@ -20,6 +20,8 @@ black = "^21.12b0"
 pylint = "^2.12.2"
 pylint-runner = "^0.6.0"
 pytest = "^6.2.5"
+pytest-cov = "^3.0.0"
+pytest-randomly = "^3.11.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
