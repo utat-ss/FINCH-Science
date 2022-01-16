@@ -1,7 +1,7 @@
 # custom
 *.zip
 .vscode/
-random_scratch.py
+scratch/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
