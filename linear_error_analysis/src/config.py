@@ -26,9 +26,8 @@ def parse_config():
     parser.add_argument(
         "--fwhm",
         type=float,
-        default=1.5,
-        help="full-width half maximum for the spectral grid. Must \
-                            be a multiple of 0.5 between 1.0 and 4.0",
+        default=0.2,
+        help="full-width half maximum for the spectral grid.",
     )
     parser.add_argument(
         "--recalc_xsec",

@@ -1,5 +1,5 @@
 """
-errors.py
+errors.py  
 
 Collects all sources of random and systematic errors
 and sets them up appropriately for the LEA program.
@@ -25,18 +25,18 @@ class Errors:
             self: contains configuration details from the initialization.
 
         Returns:
-            self.sys_errors: an array containing [total error, non-linearity,
-                stray light, crosstalk, flat-field, bad pixel, keystone/smile,
+            self.sys_errors: an array containing [total error, non-linearity, 
+                stray light, crosstalk, flat-field, bad pixel, keystone/smile, 
                 striping, memory] estimates.
         """
         self.nonlinearity = self.cfg.nonlinearity
-        self.stray_light = np.sqrt(
-            (self.cfg.fo_reflectivity) ** 2
+        self.stray_light = np.sqrt( 
+            (self.cfg.fo_reflectivity) ** 2 
             + (self.cfg.lens_reflectivity) ** 2
             + (self.cfg.mirror_reflectivity) ** 2
             + (self.cfg.ar_coatings) ** 2
             + (self.cfg.leakage) ** 2
-            + (self.cfg.ghosting) ** 2
+            + (self.cfg.ghosting) ** 2 
         )
         self.ffr = self.cfg.uniformity
         self.bad_pixels = self.cfg.bad_pixels
@@ -45,7 +45,7 @@ class Errors:
         self.striping = self.cfg.striping
         self.memory = self.cfg.memory
 
-        self.sys_error = np.sqrt(
+        self.sys_error = np.sqrt( 
             (self.nonlinearity) ** 2
             + (self.stray_light) ** 2
             + (self.crosstalk) ** 2
@@ -53,18 +53,18 @@ class Errors:
             + (self.bad_pixels) ** 2
             + (self.key_smile) ** 2
             + (self.striping) ** 2
-            + (self.memory) ** 2
+            + (self.memory) ** 2 
         )
 
         self.sys_errors = [
             self.sys_error,
-            self.nonlinearity,
-            self.stray_light,
-            self.crosstalk,
-            self.ffr,
-            self.bad_pixels,
-            self.key_smile,
-            self.striping,
+            self.nonlinearity, 
+            self.stray_light, 
+            self.crosstalk, 
+            self.ffr, 
+            self.bad_pixels, 
+            self.key_smile, 
+            self.striping, 
             self.memory,
         ]
         print(self.sys_errors)
@@ -81,7 +81,7 @@ class Errors:
             self: contains configuration details from the initialization.
 
         Returns:
-            self.rand_errors: an array containing [total error, dark current,
+            self.rand_errors: an array containing [total error, dark current, 
                 readout, quantization, photon noise] estimates.
         """
         self.area_detector = (
@@ -90,7 +90,7 @@ class Errors:
             * self.cfg.y_pixels
             * (self.cfg.pixel_pitch / 1e6)
         )
-        self.photon_noise = np.array(pn.photon_noise(self.cfg.fwhm))
+        self.photon_noise = np.array(pn.photon_noise(self.cfg.spectral_lower, self.cfg.spectral_upper, self.wave_meas, self.cfg.fwhm))
         self.quant_noise = self.cfg.well_depth / (
             2 ** (self.cfg.dynamic_range) * np.sqrt(12)
         )
@@ -106,14 +106,14 @@ class Errors:
         self.rand_error_matrix = np.zeros((len(self.wave_meas), 5), dtype=object)
 
         # interpolate self.photon_noise to match self.wave_meas grid
-        spec_res_series = np.arange(
-            self.cfg.spectral_lower, self.cfg.spectral_upper, self.cfg.fwhm
-        )
-        pn_func = interp.interp1d(
-            spec_res_series, self.photon_noise, fill_value="extrapolate"
-        )  # linear
-        self.photon_noise_interp = pn_func(self.wave_meas)
-        self.signal = self.photon_noise_interp ** 2
+        # spec_res_series = np.arange(
+        #     self.cfg.spectral_lower, self.cfg.spectral_upper, self.cfg.fwhm
+        # )
+        # pn_func = interp.interp1d(
+        #     spec_res_series, self.photon_noise, fill_value="extrapolate"
+        # )  # linear
+        # self.photon_noise_interp = pn_func(self.wave_meas)
+        self.signal = self.photon_noise ** 2
         # note: self.dark_noise is standard deviation of the dark signal squared
         # which is the dark noise added in quadrature, hence no **2
         self.rand_error = np.sqrt(
@@ -129,7 +129,7 @@ class Errors:
                 np.sqrt(self.dark_noise) / self.signal[i],
                 self.readout_noise / self.signal[i],
                 self.quant_noise / self.signal[i],
-                self.photon_noise_interp[i] / self.signal[i],
+                self.photon_noise[i] / self.signal[i],
             ]
         print(self.rand_error_matrix)
 
@@ -142,7 +142,7 @@ class Errors:
             self: contains configuration details from the initialization.
             self.sys_errors: array containing [total error, non-linearity, stray light,
                 crosstalk, flat-field, bad pixel, keystone/smile, memory, striping].
-            error_type: integer between 1 and 8 inclusive that indexes the type of
+            error_type: integer between 1 and 8 inclusive that indexes the type of 
                 error in self.sys_errors
 
         Returns:
@@ -174,7 +174,7 @@ class Errors:
 
         Args:
             self: contains configuration details from the initialization.
-            self.rand_error_matrix: array containing [total error, dark current,
+            self.rand_error_matrix: array containing [total error, dark current, 
                 readout, quantization, photon noise] by spectral band.
 
         Returns:
