@@ -189,7 +189,8 @@ class Forward:
         return self.optics
 
     def plot_transmittance(self, show_fig=True):
-        """Plots CH4, CO2, H2O transmittances, as well as their combined transmittance.
+        """
+        Plots CH4, CO2, H2O transmittances, as well as their combined transmittance.
 
         Args:
             self.optics: optical properties class.
@@ -202,10 +203,20 @@ class Forward:
 
         Returns:
             self.wave_meas: sampling spectral grid.
-            self.rad_conv_tot: total radiance.
-            self.rad_conv_ch4: methane radiance.
-            self.rad_conv_co2: carbon dioxide radiance.
-            self.rad_conv_h2o: water vapour radiance.
+            self.rad_trans_tot: total radiance.
+            self.rad_trans_ch4: methane radiance.
+            self.rad_trans_co2: carbon dioxide radiance.
+            self.rad_trans_h2o: water vapour radiance.
+            self.dev_ch4: derivative of methane radiance.
+            self.dev_co2: derivative of carbon dioxide radiance.
+            self.dev_h2o: derivative of water vapour radiance.
+            self.rad_conv_tot: total radiance convolved with ISRF.
+            self.rad_conv_ch4: methane radiance convolved with ISRF.
+            self.rad_conv_co2: carbon dioxide radiance convolved with ISRF.
+            self.rad_conv_h2o: water vapour radiance convolved with ISRF.
+            self.dev_conv_ch4: derivative of methane radiance convolved with ISRF.
+            self.dev_conv_co2: derivative of carbon dioxide radiance convolved with ISRF.
+            self.dev_conv_h2o: derivative of water vapour radiance convolved with ISRF.
         """
         self.optics.combine("molec_32", "molec_07", "molec_01")
 
@@ -285,21 +296,26 @@ class Forward:
         Produces the state vector.
 
         [
-            CH4 column concentration
-            H2O column concentration
-            CO2 column concentration
-            Surface Albedo
+            CH4 column concentration (ppm)
+            H2O column concentration (ppm)
+            CO2 column concentration (ppm)
         ]
 
+        1.87 ppm for methane is from a statistical study done, with results shown in
+        ../data/ta_20180601_20190930.oof.csv
+
+        420 ppm for carbon dioxide is obtained from this source: 
+        https://research.noaa.gov/article/ArtMID/587/ArticleID/2764/Coronavirus-response-barely-slows-rising-carbon-dioxide
+
+        50000 ppm for water vapour is obtained from this source:
+        https://cdiac.ess-dive.lbl.gov/pns/current_ghg.html#:~:text=A%20vertically%20and%20horizontally%20averaged%20water%20vapor%20concentration,of%20changes%20in%20water%20vapor%20since%20pre-industrial%20time.
+
+
         Args:
-            self.rad_conv_ch4: methane radiance
-            self.rad_conv_co2: carbon dioxide radiance
-            self.rad_conv_h2o: water vapour radiance
-            scaling_factor: the column concentrations are scaled by some factor
 
         Returns:
             x_0: state vector
 
         """
-        x_0 = np.asarray([1.87, 420, 50000])
+        x_0 = np.asarray([1.87, 420, 5000])
         return x_0

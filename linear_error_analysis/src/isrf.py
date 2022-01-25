@@ -2,13 +2,14 @@
 isrf.py
 
 Convolves the transmittance spectrum with the instrument spectral response function.
+This file is included in case it becomes useful in the future, but at the moment the
+slit_conv() function inside of forward.py is being used to perform the convolution.
 
 Author(s): Adyn Miles, Shiqi Xu, Rosie Liang
 """
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy import signal
 
 import libs.hapi as hp
 
@@ -44,16 +45,20 @@ class ISRF:
             self.wave_meas: spectral grid, in wavelength.
 
         Returns:
-            self.isrf: the isrf curve, in wavenumber.
+            self.isrf: the isrf curve, measured at each wavenumber.
         """
+        # Convert wavelength to wavenumber
         self.wave_meas = np.flip(1e7 / (self.wave_meas))
         self.fwhm = self.wave_meas[2] - self.wave_meas[0]
+        # Add two more values, one on each end of the spectral grid, so that after
+        # being cut by convolveSpectrum, the spectral grid is the correct size.
         self.wave_meas = np.append(
             self.wave_meas, self.wave_meas[-1] + (0.5 * self.fwhm)
         )
         self.wave_meas = np.insert(
             self.wave_meas, 0, self.wave_meas[0] - (0.5 * self.fwhm)
         )
+        # ISRF function sourced from HAPI manual found at ../doc/hapi_manual.pdf
         self.isrf = (
             1
             / (self.fwhm)
@@ -68,28 +73,44 @@ class ISRF:
 
         return self.isrf
 
-    def convolve_isrf(self, radiance, show_fig=True):
+    def convolve_isrf(self, radiance, wave_meas, show_fig=False):
         """Convolve instrument spectral response function with forward model
-        transmittance.
+        radiance.
 
         Args:
-            self.isrf: the isrf curve.
-            self.radiance: total radiance curve from the forward model.
+            radiance: the radiance calculated over the spectral grid
+            wave_meas: the spectral grid
+            show_fig: set to True if output plots are desired.
 
         Returns:
-            self.isrf_conv: TODO
+            self.isrf_conv: ISRF convolved with forward model radiance at each
+            point in the spectral grid.
         """
-        self.wave_meas, self.isrf_conv, i1, i2, slit = hp.convolveSpectrum(
-            self.wave_meas,
+
+        # Convert wavelength to wavenumber
+        wave_meas = np.flip(1e7 / (wave_meas))
+        self.fwhm = wave_meas[2] - wave_meas[0]
+        # Add two more values, one on each end of the spectral grid, so that after
+        # being cut by convolveSpectrum, the spectral grid is the correct size.
+        wave_meas = np.append(
+            wave_meas, wave_meas[-1] + (0.5 * self.fwhm)
+        )
+        wave_meas = np.insert(
+            wave_meas, 0, wave_meas[0] - (0.5 * self.fwhm)
+        )
+
+        # AF_wing refers to how much you would like to clip the spectral grid on
+        # each side, with AF_wing = 0.0. 
+        self.wave_meas_conv, self.isrf_conv, i1, i2, slit = hp.convolveSpectrum(
+            wave_meas,
             radiance,
             SlitFunction=hp.SLIT_DIFFRACTION,
             AF_wing=0.0,
             Resolution=self.fwhm,
         )
 
-        plt.plot(self.wave_meas, self.isrf_conv)
+        plt.plot(self.wave_meas_conv, self.isrf_conv)
         plt.title("ISRF Convolved with forward model response")
-        if show_fig == True:
-            plt.show()
+        plt.show()
 
-        return self.isrf_conv
+        return self.wave_meas_conv, self.isrf_conv, i1, i2, slit

@@ -22,12 +22,13 @@ class Errors:
         """Performs calculations on inputted systematic errors from config.py.
 
         Args:
-            self: contains configuration details from the initialization.
+            self: contains configuration details from the initialization, as well
+                  as the spectral grid.
 
         Returns:
             self.sys_errors: an array containing [total error, non-linearity, 
                 stray light, crosstalk, flat-field, bad pixel, keystone/smile, 
-                striping, memory] estimates.
+                striping, memory] estimates relative to input signal.
         """
         self.nonlinearity = self.cfg.nonlinearity
         self.stray_light = np.sqrt( 
@@ -81,8 +82,8 @@ class Errors:
             self: contains configuration details from the initialization.
 
         Returns:
-            self.rand_errors: an array containing [total error, dark current, 
-                readout, quantization, photon noise] estimates.
+            self.rand_error_matrix: a matrix containing [total error, dark current, 
+                readout, quantization, photon noise] estimates relative to input signal.
         """
         self.area_detector = (
             self.cfg.x_pixels
@@ -90,6 +91,8 @@ class Errors:
             * self.cfg.y_pixels
             * (self.cfg.pixel_pitch / 1e6)
         )
+
+        # Interpolate photon noise based on the spectral range and resolution.
         self.photon_noise = np.array(pn.photon_noise(self.cfg.spectral_lower, self.cfg.spectral_upper, self.wave_meas, self.cfg.fwhm))
         self.quant_noise = self.cfg.well_depth / (
             2 ** (self.cfg.dynamic_range) * np.sqrt(12)
@@ -105,17 +108,10 @@ class Errors:
 
         self.rand_error_matrix = np.zeros((len(self.wave_meas), 5), dtype=object)
 
-        # interpolate self.photon_noise to match self.wave_meas grid
-        # spec_res_series = np.arange(
-        #     self.cfg.spectral_lower, self.cfg.spectral_upper, self.cfg.fwhm
-        # )
-        # pn_func = interp.interp1d(
-        #     spec_res_series, self.photon_noise, fill_value="extrapolate"
-        # )  # linear
-        # self.photon_noise_interp = pn_func(self.wave_meas)
-        self.signal = self.photon_noise ** 2
-        # note: self.dark_noise is standard deviation of the dark signal squared
-        # which is the dark noise added in quadrature, hence no **2
+        self.signal = (self.photon_noise ** 2)*self.cfg.t_int/0.1667
+        # note: self.dark_noise is standard deviation of the dark signal squared. 
+        # When added in quadrature, this is just self.dark_noise.
+        
         self.rand_error = np.sqrt(
             self.signal
             + self.readout_noise ** 2
@@ -131,7 +127,6 @@ class Errors:
                 self.quant_noise / self.signal[i],
                 self.photon_noise[i] / self.signal[i],
             ]
-        print(self.rand_error_matrix)
 
         return self.rand_error_matrix
 
@@ -146,9 +141,11 @@ class Errors:
                 error in self.sys_errors
 
         Returns:
-            delta_y: Systematic error vector.
+            delta_y: Systematic error vector containing [total error, non-linearity,
+                stray light, crosstalk, flat-field, bad pixel, keystone/smile, memory, 
+                striping]
         """
-        # systematic errors assumed constant across spectral range for now
+        # Systematic errors assumed constant across spectral range.
         delta_y = np.full((len(self.wave_meas), 1), self.sys_errors[error_type])
 
         sys_error_types = [
@@ -163,23 +160,26 @@ class Errors:
             "memory effect",
         ]
 
-        print("\n" + sys_error_types[error_type] + "systematic error:")
-        print(delta_y)
-        print()
-
         return delta_y
 
     def error_covariance(self):
         """Composes Sy error covariance matrix for random errors.
 
+        Sy is of dimensions (i x i)
+
+        i = number of points in the spectral grid (wave_meas)
+
         Args:
             self: contains configuration details from the initialization.
-            self.rand_error_matrix: array containing [total error, dark current, 
-                readout, quantization, photon noise] by spectral band.
+            self.rand_error_matrix: matrix containing [total error, dark current, 
+                readout, quantization, photon noise] at each spectral grid point.
 
         Returns:
             S_y: Random error covariance matrix.
         """
+
+        # The error covariance matrix is simply the square of the random errors
+        # on the diagonal. There are assumed to be no correlation between bands.
         meas_err_vector = np.array([band[0] for band in self.rand_error_matrix])
         S_y = np.diag(np.square(meas_err_vector))
 

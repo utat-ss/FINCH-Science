@@ -1,8 +1,7 @@
 """
 config.py
 
-Configuration file for the Linear Error Analysis program. All
-config settings can be run through the command line using lea.sh
+Configuration file for the Linear Error Analysis program. 
 
 Author(s): Adyn Miles, Shiqi Xu, Rosie Liang
 """
@@ -10,8 +9,12 @@ Author(s): Adyn Miles, Shiqi Xu, Rosie Liang
 import argparse
 
 
-def parse_config():
-    """Sets up configurability of inputs to LEA program through terminal."""
+def parse_config(dark_current, readout_noise, integration_time, spectral_res):
+    """Sets up configurability of inputs to LEA program through terminal.
+    
+    Returns:
+        parser.parse_args(): contains all configuration arguments.
+    """
 
     parser = argparse.ArgumentParser()
 
@@ -26,7 +29,7 @@ def parse_config():
     parser.add_argument(
         "--fwhm",
         type=float,
-        default=0.2,
+        default=spectral_res,
         help="full-width half maximum for the spectral grid.",
     )
     parser.add_argument(
@@ -158,13 +161,13 @@ def parse_config():
         "--pixel_pitch", type=int, default=15, help="pixel pitch for the detector (um)"
     )
     parser.add_argument(
-        "--t_int", type=int, default=0.1667, help="integration time (in s)"
+        "--t_int", type=int, default=integration_time, help="integration time (in s)"
     )
     parser.add_argument(
         "--well_depth",
         type=int,
         default=19000,
-        help="well depth for the detector (in e-)",
+        help="well depth for the detector (in e-), default = 19000",
     )
     parser.add_argument(
         "--dynamic_range",
@@ -173,10 +176,10 @@ def parse_config():
         help="dynamic range of sensor (in bits)",
     )
     parser.add_argument(
-        "--dark_current", type=int, default=10, help="dark current (in nA/cm^2)"
+        "--dark_current", type=int, default=dark_current, help="dark current (in nA/cm^2), default = 10"
     )
     parser.add_argument(
-        "--readout_noise", type=int, default=500, help="readout noise (in e-)"
+        "--readout_noise", type=int, default=readout_noise, help="readout noise (in e-), default = 500"
     )
 
     return parser.parse_args()

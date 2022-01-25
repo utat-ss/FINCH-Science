@@ -8,6 +8,7 @@ Author(s): Adyn Miles, Shiqi Xu, Rosie Liang
 
 import matplotlib.pyplot as plt
 import numpy as np
+from isrf import ISRF
 
 import libs.hapi as hp
 
@@ -32,32 +33,10 @@ class Optim:
             dev_h2o: vector containing the derivatives of the water vapour forward model response.
 
         Returns:
-            K: instrument spectral response function convolved with the spectral response.
+            K: Jacobian matrix of derivatives convolved with the instrument spectral response function.
         """
-        # Conversion to cm^(-1), the units for wavenumber.
-        # self.wave_meas = np.flip(1e7/(self.wave_meas))
-        # self.fwhm = self.wave_meas[2] - self.wave_meas[0]
-        # self.wave_meas = np.append(self.wave_meas, self.wave_meas[-1] + (0.5*self.fwhm))
-        # self.wave_meas = np.insert(self.wave_meas, 0, self.wave_meas[0] - (0.5*self.fwhm))
-        # self.wave_meas_1, self.d_isrf_conv_1, i1, i2, slit = hp.convolveSpectrum(
-        #             self.wave_meas, dev_ch4,
-        #             SlitFunction=hp.SLIT_DIFFRACTION, AF_wing=0.0, Resolution=self.fwhm)
 
-        # self.wave_meas_2, self.d_isrf_conv_2, i1, i2, slit = hp.convolveSpectrum(
-        #             self.wave_meas, dev_co2,
-        #             SlitFunction=hp.SLIT_DIFFRACTION, AF_wing=0.0, Resolution=self.fwhm)
-
-        # self.wave_meas_3, self.d_isrf_conv_3, i1, i2, slit = hp.convolveSpectrum(
-        #             self.wave_meas, dev_h2o,
-        #             SlitFunction=hp.SLIT_DIFFRACTION, AF_wing=0.0, Resolution=self.fwhm)
-
-        # self.K = np.zeros((len(self.wave_meas_1), 3))
-        # self.K[:, 0] = self.d_isrf_conv_1
-        # self.K[:, 1] = self.d_isrf_conv_2
-        # self.K[:, 2] = self.d_isrf_conv_3
-
-        # This uses Jochen's slit_conv. I think we should just use his, as it was likely
-        # written for this exact purpose.
+        # This uses the outputs from slit_conv() to produce the Jacobian values. 
         self.K = np.zeros((len(dev_ch4), 3))
         self.K[:, 0] = dev_ch4
         self.K[:, 1] = dev_co2
@@ -75,10 +54,11 @@ class Optim:
         S_y = random error covariance matrix
 
         Parameters:
+            self.K: Jacobian matrix of derivatives convolved with the instrument spectral response function.
             S_y: random error covariance matrix
 
         Returns:
-            K: instrument spectral response function convolved with the spectral response.
+            G: gain matrix for mapping the measurement space to the state space.
         """
         self.G_1 = np.linalg.inv(
             np.matmul(np.transpose(self.K), np.matmul(np.linalg.inv(S_y), self.K))
@@ -90,17 +70,20 @@ class Optim:
 
     def modify_meas_vector(self, x_0, F, S_y):
         """
-        Modifies the measurement vector to include the forward model information
+        Modifies the measurement vector to include the forward model information, and linearizes it for
+        error analysis.
 
         Parameters:
             x_0: state vector
             F: forward model response, which is the instrument spectral response function convolved with the radiance.
             S_y: random error covariance matrix
+            self.K: Jacobian matrix of derivatives convolved with the instrument spectral response function
 
         Returns:
             y_tilde: modified state vector
         """
-        # Poisson noise vector
+        # Poisson noise vector, taken to be the square root of the diagonal elements of the covariance matrix, 
+        # which consists of the covariance of random noise along the diagonal.
         e = []
         iter_range = np.shape(S_y)
         for i in range(0, iter_range[0]):
@@ -111,7 +94,7 @@ class Optim:
 
         return y_tilde
 
-    def state_estimate(self, S_y, y_tilde, system_errors):
+    def state_estimate(self, S_y, y_tilde):
         """
         Calculates the state estimates x_est and S_x for both spectral resolution and the signal to noise ratio.
 
@@ -127,3 +110,18 @@ class Optim:
         S_x = np.matmul(self.G, np.matmul(S_y, np.transpose(self.G)))
 
         return x_est, S_x
+
+    def system_est_error(self, system_error):
+        """
+        Calculates the state estimates x_est and S_x for both spectral resolution and the signal to noise ratio.
+
+        Parameters:
+            system_error: specific error chosen from the system_errors vector 
+
+        Returns:
+            dx_est: Deviation caused by this systematic error.
+        """
+        dx_est = np.matmul(self.G, system_error)
+        dx_est = np.reshape(dx_est, (np.size(dx_est),))
+
+        return dx_est
