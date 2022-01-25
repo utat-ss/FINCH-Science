@@ -94,6 +94,7 @@ class Errors:
 
         # Interpolate photon noise based on the spectral range and resolution.
         self.photon_noise = np.array(pn.photon_noise(self.cfg.spectral_lower, self.cfg.spectral_upper, self.wave_meas, self.cfg.fwhm))
+        self.photon_noise = self.photon_noise * self.cfg.t_int / 0.1667
         self.quant_noise = self.cfg.well_depth / (
             2 ** (self.cfg.dynamic_range) * np.sqrt(12)
         )
@@ -108,7 +109,7 @@ class Errors:
 
         self.rand_error_matrix = np.zeros((len(self.wave_meas), 5), dtype=object)
 
-        self.signal = (self.photon_noise ** 2)*self.cfg.t_int/0.1667
+        self.signal = (self.photon_noise ** 2) * self.cfg.t_int / 0.1667
         # note: self.dark_noise is standard deviation of the dark signal squared. 
         # When added in quadrature, this is just self.dark_noise.
         
