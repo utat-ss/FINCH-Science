@@ -123,108 +123,112 @@ if __name__ == "__main__":
         cfg = config.parse_config(dark_current[idx], 500, 0.16667, 1.5)
         estimate_list[idx, :], snr_list[idx, :], nonlinearity_list[idx, :], straylight_list[idx, :], crosstalk_list[idx, :], flatfield_list[idx, :], badpixel_list[idx, :], smile_list[idx, :], memory_list[idx, :], striping_list[idx, :] = main(cfg)
 
-    for molecule in range(0, 3):
-        plt.plot(dark_current, abs(state_vector[:, molecule] - estimate_list[:, molecule])/state_vector[:, molecule] * 100)
-    plt.title("Estimate error as a function of Dark Current")
-    plt.xlabel("Dark Current (in nA/cm^2)")
-    plt.ylabel("Estimate error (%)")
-    plt.legend(["Methane", "Carbon Dioxide", "Water Vapour"])
-    plt.show()
-    plt.close()
+    # for molecule in range(0, 3):
+    #     plt.plot(dark_current, abs(state_vector[:, molecule] - estimate_list[:, molecule])/state_vector[:, molecule] * 100)
+    # plt.title("Estimate error as a function of Dark Current")
+    # plt.xlabel("Dark Current (in nA/cm^2)")
+    # plt.ylabel("Estimate error (%)")
+    # plt.legend(["Methane", "Carbon Dioxide", "Water Vapour"])
+    # plt.show()
+    # plt.close()
 
-    for molecule in range(0, 3):
-        plt.plot(snr_list, abs(state_vector[:, molecule] - estimate_list[:, molecule])/state_vector[:, molecule] * 100)
+    # for molecule in range(0, 3):
+    for molecule in range(0, 1):
+        plt.semilogy(snr_list, abs(state_vector[:, molecule] - estimate_list[:, molecule])/state_vector[:, molecule] * 100)
     plt.title("Estimate error as a function of Signal to Noise Ratio")
     plt.xlabel("Signal to Noise Ratio")
-    plt.ylabel("Estimate error (%)")
-    plt.legend(["Methane", "Carbon Dioxide", "Water Vapour"])
+    plt.ylabel("Estimate error in methane concentration (%)")
+    plt.xlim(0, 400)
+    # plt.legend(["Methane", "Carbon Dioxide", "Water Vapour"])
     plt.show()
     plt.close()
 
-    estimate_list = np.zeros((len(readout_noise), 3))
-    snr_list = np.zeros((len(readout_noise), 1))
-    nonlinearity_list = np.zeros((len(readout_noise), 3))
-    straylight_list = np.zeros((len(readout_noise), 3))
-    crosstalk_list = np.zeros((len(readout_noise), 3))
-    flatfield_list = np.zeros((len(readout_noise), 3))
-    badpixel_list = np.zeros((len(readout_noise), 3))
-    smile_list = np.zeros((len(readout_noise), 3))
-    memory_list = np.zeros((len(readout_noise), 3))
-    striping_list = np.zeros((len(readout_noise), 3))
+    # estimate_list = np.zeros((len(readout_noise), 3))
+    # snr_list = np.zeros((len(readout_noise), 1))
+    # nonlinearity_list = np.zeros((len(readout_noise), 3))
+    # straylight_list = np.zeros((len(readout_noise), 3))
+    # crosstalk_list = np.zeros((len(readout_noise), 3))
+    # flatfield_list = np.zeros((len(readout_noise), 3))
+    # badpixel_list = np.zeros((len(readout_noise), 3))
+    # smile_list = np.zeros((len(readout_noise), 3))
+    # memory_list = np.zeros((len(readout_noise), 3))
+    # striping_list = np.zeros((len(readout_noise), 3))
 
-    state_vector = np.zeros((len(readout_noise), 3))
-    for idx in range(0, len(readout_noise)):
-        state_vector[idx, 0] = 1.87
-        state_vector[idx, 1] = 420
-        state_vector[idx, 2] = 50000 
+    # state_vector = np.zeros((len(readout_noise), 3))
+    # for idx in range(0, len(readout_noise)):
+    #     state_vector[idx, 0] = 1.87
+    #     state_vector[idx, 1] = 420
+    #     state_vector[idx, 2] = 50000 
 
-    for idx in range(0, len(readout_noise)):
-        cfg = config.parse_config(10, readout_noise[idx], 0.16667, 1.5)
-        estimate_list[idx, :], snr_list[idx, :], nonlinearity_list[idx], straylight_list[idx], crosstalk_list[idx], flatfield_list[idx], badpixel_list[idx], smile_list[idx], memory_list[idx], striping_list[idx] = main(cfg)
+    # for idx in range(0, len(readout_noise)):
+    #     cfg = config.parse_config(10, readout_noise[idx], 0.16667, 1.5)
+    #     estimate_list[idx, :], snr_list[idx, :], nonlinearity_list[idx], straylight_list[idx], crosstalk_list[idx], flatfield_list[idx], badpixel_list[idx], smile_list[idx], memory_list[idx], striping_list[idx] = main(cfg)
     
-    for molecule in range(0, 3):
-        plt.plot(readout_noise, abs(state_vector[:, molecule] - estimate_list[:, molecule])/state_vector[:, molecule] * 100)
-    plt.title("Estimate error as a function of Readout Noise")
-    plt.xlabel("Readout Noise (in e-)")
-    plt.ylabel("Estimate error (%)")
-    plt.legend(["Methane", "Carbon Dioxide", "Water Vapour"])
-    plt.show()
-    plt.close()
+    # for molecule in range(0, 3):
+    #     plt.plot(readout_noise, abs(state_vector[:, molecule] - estimate_list[:, molecule])/state_vector[:, molecule] * 100)
+    # plt.title("Estimate error as a function of Readout Noise")
+    # plt.xlabel("Readout Noise (in e-)")
+    # plt.ylabel("Estimate error (%)")
+    # plt.legend(["Methane", "Carbon Dioxide", "Water Vapour"])
+    # plt.show()
+    # plt.close()
 
-    estimate_list = np.zeros((len(integration_time), 3))
-    snr_list = np.zeros((len(integration_time), 1))
-    nonlinearity_list = np.zeros((len(integration_time), 3))
-    straylight_list = np.zeros((len(integration_time), 3))
-    crosstalk_list = np.zeros((len(integration_time), 3))
-    flatfield_list = np.zeros((len(integration_time), 3))
-    badpixel_list = np.zeros((len(integration_time), 3))
-    smile_list = np.zeros((len(integration_time), 3))
-    memory_list = np.zeros((len(integration_time), 3))
-    striping_list = np.zeros((len(integration_time), 3))
+    # estimate_list = np.zeros((len(integration_time), 3))
+    # snr_list = np.zeros((len(integration_time), 1))
+    # nonlinearity_list = np.zeros((len(integration_time), 3))
+    # straylight_list = np.zeros((len(integration_time), 3))
+    # crosstalk_list = np.zeros((len(integration_time), 3))
+    # flatfield_list = np.zeros((len(integration_time), 3))
+    # badpixel_list = np.zeros((len(integration_time), 3))
+    # smile_list = np.zeros((len(integration_time), 3))
+    # memory_list = np.zeros((len(integration_time), 3))
+    # striping_list = np.zeros((len(integration_time), 3))
 
-    state_vector = np.zeros((len(integration_time), 3))
-    for idx in range(0, len(integration_time)):
-        state_vector[idx, 0] = 1.87
-        state_vector[idx, 1] = 420
-        state_vector[idx, 2] = 50000 
+    # state_vector = np.zeros((len(integration_time), 3))
+    # for idx in range(0, len(integration_time)):
+    #     state_vector[idx, 0] = 1.87
+    #     state_vector[idx, 1] = 420
+    #     state_vector[idx, 2] = 50000 
 
-    for idx in range(0, len(integration_time)):
-        cfg = config.parse_config(10, 500, integration_time[idx], 1.5)
-        estimate_list[idx], snr_list[idx], nonlinearity_list[idx], straylight_list[idx], crosstalk_list[idx], flatfield_list[idx], badpixel_list[idx], smile_list[idx], memory_list[idx], striping_list[idx] = main(cfg)
+    # for idx in range(0, len(integration_time)):
+    #     cfg = config.parse_config(10, 500, integration_time[idx], 1.5)
+    #     estimate_list[idx], snr_list[idx], nonlinearity_list[idx], straylight_list[idx], crosstalk_list[idx], flatfield_list[idx], badpixel_list[idx], smile_list[idx], memory_list[idx], striping_list[idx] = main(cfg)
         
-    for molecule in range(0, 3):
-        plt.plot(integration_time, abs(state_vector[:, molecule] - estimate_list[:, molecule])/state_vector[:, molecule] * 100)
-    plt.title("Estimate error as a function of Integration Time")
-    plt.xlabel("Integration Time (in s)")
-    plt.ylabel("Estimate error (%)")
-    plt.legend(["Methane", "Carbon Dioxide", "Water Vapour"])
-    plt.show()
+    # for molecule in range(0, 3):
+    #     plt.plot(integration_time, abs(state_vector[:, molecule] - estimate_list[:, molecule])/state_vector[:, molecule] * 100)
+    # plt.title("Estimate error as a function of Integration Time")
+    # plt.xlabel("Integration Time (in s)")
+    # plt.ylabel("Estimate error (%)")
+    # plt.legend(["Methane", "Carbon Dioxide", "Water Vapour"])
+    # plt.show()
+    # plt.close()
 
-    estimate_list = np.zeros((len(spectral_resolution), 3))
-    snr_list = np.zeros((len(spectral_resolution), 1))
-    nonlinearity_list = np.zeros((len(spectral_resolution), 3))
-    straylight_list = np.zeros((len(spectral_resolution), 3))
-    crosstalk_list = np.zeros((len(spectral_resolution), 3))
-    flatfield_list = np.zeros((len(spectral_resolution), 3))
-    badpixel_list = np.zeros((len(spectral_resolution), 3))
-    smile_list = np.zeros((len(spectral_resolution), 3))
-    memory_list = np.zeros((len(spectral_resolution), 3))
-    striping_list = np.zeros((len(spectral_resolution), 3))  
+    # estimate_list = np.zeros((len(spectral_resolution), 3))
+    # snr_list = np.zeros((len(spectral_resolution), 1))
+    # nonlinearity_list = np.zeros((len(spectral_resolution), 3))
+    # straylight_list = np.zeros((len(spectral_resolution), 3))
+    # crosstalk_list = np.zeros((len(spectral_resolution), 3))
+    # flatfield_list = np.zeros((len(spectral_resolution), 3))
+    # badpixel_list = np.zeros((len(spectral_resolution), 3))
+    # smile_list = np.zeros((len(spectral_resolution), 3))
+    # memory_list = np.zeros((len(spectral_resolution), 3))
+    # striping_list = np.zeros((len(spectral_resolution), 3))  
 
-    state_vector = np.zeros((len(spectral_resolution), 3))
-    for idx in range(0, len(spectral_resolution)):
-        state_vector[idx, 0] = 1.87
-        state_vector[idx, 1] = 420
-        state_vector[idx, 2] = 50000   
+    # state_vector = np.zeros((len(spectral_resolution), 3))
+    # for idx in range(0, len(spectral_resolution)):
+    #     state_vector[idx, 0] = 1.87
+    #     state_vector[idx, 1] = 420
+    #     state_vector[idx, 2] = 50000   
 
-    for idx in range(0, len(spectral_resolution)):
-        cfg = config.parse_config(10, 500, 0.16667, spectral_resolution[idx])
-        estimate_list[idx], snr_list[idx], nonlinearity_list[idx], straylight_list[idx], crosstalk_list[idx], flatfield_list[idx], badpixel_list[idx], smile_list[idx], memory_list[idx], striping_list[idx] = main(cfg)
+    # for idx in range(0, len(spectral_resolution)):
+    #     cfg = config.parse_config(10, 500, 0.16667, spectral_resolution[idx])
+    #     estimate_list[idx], snr_list[idx], nonlinearity_list[idx], straylight_list[idx], crosstalk_list[idx], flatfield_list[idx], badpixel_list[idx], smile_list[idx], memory_list[idx], striping_list[idx] = main(cfg)
     
-    for molecule in range(0, 3):
-        plt.plot(spectral_resolution, abs(state_vector[:, molecule] - estimate_list[:, molecule])/state_vector[:, molecule] * 100)
-    plt.title("Estimate error as a function of Spectral Resolution")
-    plt.xlabel("Spectral Resolution (nm)")
-    plt.ylabel("Estimate error (%)")
-    plt.legend(["Methane", "Carbon Dioxide", "Water Vapour"])
-    plt.show()    
+    # for molecule in range(0, 3):
+    #     plt.plot(spectral_resolution, abs(state_vector[:, molecule] - estimate_list[:, molecule])/state_vector[:, molecule] * 100)
+    # plt.title("Estimate error as a function of Spectral Resolution")
+    # plt.xlabel("Spectral Resolution (nm)")
+    # plt.ylabel("Estimate error (%)")
+    # plt.legend(["Methane", "Carbon Dioxide", "Water Vapour"])
+    # plt.show()
+    # plt.close()
