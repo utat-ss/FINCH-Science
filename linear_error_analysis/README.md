@@ -4,7 +4,7 @@ Authors: Adyn Miles, Shiqi Xu, Rosie Liang (University of Toronto Aerospace Team
 
 With support from Dr. Jochen Landgraf (SRON)
 
-Fall 2021
+Start Date: October 1, 2021
 
 -----------------------------
 ## Overview
