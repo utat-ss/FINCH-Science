@@ -1,86 +1,30 @@
 # FINCH Linear Error Analysis
 
-Authors: Adyn Miles, Shiqi Xu, Rosie Liang (UTAT)
+Authors: Adyn Miles, Shiqi Xu, Rosie Liang (University of Toronto Aerospace Team)
 
 With support from Dr. Jochen Landgraf (SRON)
 
 Fall 2021
 
 -----------------------------
+## Overview
 
-## TODO
-
-### `errors.py`
-
-* debug ECM ($S_y$) - currently outputting all `NaN` when `bias=True` in `np.cov()` and all `0` when `bias=False`
-
-### `optim.py`
-
-* set up $K$ from `forward.py` output ($F$)
-
-### `general`
-
-* distinguish between FWHM in nm and in cm<sup>-1</sup> (`photon_noise` specifically takes input in nm)
-* incorporate argument typing
-* add documentation in this README
+The Linear Error Analysis tool helps UTAT's Space Systems Division effectively translate between scientific requirements and optical design requirements to provide quantitative measures of a payload profile's usefulness for atmospheric monitoring. More information on the specifics of this program is available in the [Linear Error Analysis Documentation](https://spacesys.utat.ca/confluence/display/FIN/Linear+Error+Analysis+Documentation), as well as the FINCH team's recent [SmallSat publication](https://spacesys.utat.ca/confluence/display/FIN/FINCH+Eye+2022+SmallSat+Publication). 
 
 -----------------------------
 
-## Questions
+## Usage
 
-### For Jochen
+### main.py
 
-* [Shiqi, 2021-11-21] Can our state vector $x$ be 1 by 1 (i.e. just total column XCH<sub>4</sub>)?
-* [Shiqi, 2021-11-21] Can we choose $x_0$ arbitrarily?
-* [Shiqi, 2021-11-21] Why is $F_i$ a function of transition wavelength $\lambda_i$?
-* [Adyn, 2022-01-03] What are the units of the items in the state vector? What specifically goes into that vector?
-* [Adyn, 2022-01-03] What goes into the measurement vector? What is the e Poisson noise vector?
+This file will execute the entire program when run. This includes generating the forward model for the investigated molecules (methane, carbon dioxide, and water vapour), convolving them with an instrument response function, and then performing a linear projection onto an estimation space to produce parts per million concentration estimates for methane, carbon dioxide, and water vapour. The program can then compare these estimates to the original state vector (determined through research), and can generate trends based on the variance of select payload parameters. More information on these trends can be found in the [Linear Error Analysis Documentation](https://spacesys.utat.ca/confluence/display/FIN/Linear+Error+Analysis+Documentation).
 
-### For us
-* [Adyn, 2022-01-03] What is the difference between slit_conv and convolve_Spectrum functions? 
+### config.py
 
+This file contains configurations for payload parameters, atmospheric parameters, as well as parameters that control the operation of the code. Payload and atmospheric parameter inputs and rationale are included in the [Linear Error Analysis Documentation](https://spacesys.utat.ca/confluence/display/FIN/Linear+Error+Analysis+Documentation). The one parameter controlling code operation is `recalc_xsec`, which can be set `True` or `False` depending on whether or not you would like the program to regather data online from Hitran using HAPI. If this has already been done on a previous run, set this to `False` to save significant time on future executions.
 
+### libs/photon_noise.py
 
------------------------------
-
-## Section
-
-### Subsection
-
-Paragraph
-
-(This is a template)
+This file is a lookup table for the photon noise found at wavelengths within the FINCH Eye's spectral range, based on a Signal to Noise Ratio Analysis. The program uses this to investigate the relative effects of various errors, and to determine the relationship between signal to noise ratio and estimate error.
 
 -----------------------------
-
-## Known GTA XCH<sub>4</sub> Concentrations
-
-### Module
-`lib/gta_xch4.py`
-
-### Data
-`data/ta_20180601_20190930.oof.csv`
-
-### Source
-Downloaded from Debra Wunch Dataverse \
-https://dataverse.scholarsportal.info/dataset.xhtml?persistentId=doi:10.5683/SP2/RNCAWQ
-
-### Content
-Column-Averaged Mixing Ratios of Atmospheric CO<sub>2</sub>, CO, CH<sub>4</sub> \
-Toronto, Ontario \
-2018-2019
-
-### Objective
-To obtain estimates of total column dry mixing ratio of methane (XCH<sub>4</sub>) in the Greater Toronto Area
-
-Satisfied (y/n)?
-* Not sure as of 2021-11-06; Shiqi to double check whether (column-averaged == total column)
-* Yes as of 2021-11-13; column-averaged is total column divided through by dry air column
-
-### Findings
-`plots/GTA_XCH4_2018-19_hist.png`
-![](plots/GTA_XCH4_2018-19_hist.png)
-
-XCH<sub>4</sub> (column-averaged)
-* Mean: 1.87 ppm
-* Std dev: 0.01 ppm
