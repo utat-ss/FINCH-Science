@@ -3,7 +3,7 @@ This file is for the determination of optimal endmembers using KNN. To do this, 
 reduce the dimensions of the data by using PCA. I have no idea how many dimensions we should
 preserve, so I will go through dimensions of 10-30 and see how the variance changes, using this
 we can determine how many dimensions we require. Additionally, this code will include a section
-of performing KNN on the reduced data, from this data, we will choose the endmember that is the
+of performing KNN and KMC on the reduced data, from this data, we will choose the endmember that is the
 most representative of each class using methods as: centroid, median, and density.
 
 Author: Ege Artan, UTAT-Finch Science
