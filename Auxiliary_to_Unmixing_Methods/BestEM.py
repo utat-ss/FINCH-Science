@@ -17,6 +17,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.cluster import KMeans
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -26,7 +28,7 @@ import matplotlib.pyplot as plt
 
 input_bigdata = r"C:\University\science utat\endmember_perfect_1.csv" #input the data here
 Df_BigData = pd.read_csv(input_bigdata)
-input_bigdata = r"C:\University\science utat\endmember_not_perfect_0.99.csv" #input the data here
+input_bigdata = r"C:\University\science utat\endmember_not_perfect_0.95.csv" #input the data here
 Df_BigDataImperfect = pd.read_csv(input_bigdata)
 
 #endregion
@@ -291,6 +293,7 @@ def KNN_Fit(X, init_df, k, thresh):
 
     #Now, we will set up the class_array of labels
     Threshed_shape = Thresh_Df.shape
+
     class_array= np.full(shape=(Threshed_shape[0],), fill_value = -1 ,dtype=int)
     
     #create a non-shaped array of equal length to the row number of initial data
@@ -332,11 +335,15 @@ def Collect_Class(Df_BigData, Predicts, class_number):
 
 #region KMC Analysis
 
+"""KMC analysis has some functions that give us the cluster centers instantly, therefore, they are a natural candidate
+to this entire process of endmember determination. Will implement a pipeline which gives us the row of the endmember,
+this function currently only return the actual post-PCA endmember entries, but we need to know which EM it is, not its entries"""
+
 def KMC_Fit(X, n_clusters, algorithm_type):
 
-    KMC = KMeans(n_clusters=n_clusters, algorithm=algorithm_type).fit(X)
+    KMC = KMeans(n_clusters=n_clusters, n_init='auto', algorithm=algorithm_type).fit(X)
     
-    return KMC.cluster_centers_
+    return KMC.cluster_centers_, KMC
 
 #endregion
 
@@ -372,27 +379,102 @@ def Find_Centroid(Class_Dataframe):
     
 #endregion
 
-#Testing grounds:
-
-"""First, fit the KNN model to a training sample, that we know the labels of (perfect EMs).
-Then, perform KNN on the wanted set of endmembers, then find the most representative by finding
-the centroid of the data.
-"""
-
-Df_PCA = PCAnalysis(7,40,40,Df_BigDataImperfect)
-print(KMC_Fit(Df_PCA, 3, "lloyd"))
+#region How Accurate?
 
 """
-KNN_Algo = KNN_Fit(Df_PCA, Df_BigDataImperfect, 4, 1)
+In this region, I wanted to personally test out if our predictions do make sense, to show if this makessense, Aidan proposed 
+we should be using a confusion matrix. This proposal makes sense so that's what we are going to do.
+"""
 
-Predictions = KNN_Algo.predict(Df_PCA)
+def HowTrue(y_true, y_pred):  
+    """Takes y_true as the true predictions for what the thing is, takes y_pred as what our predictions are. Returns the
+    confusion matrix as the first output and also plots the confusion matrix."""
+
+    cm = confusion_matrix(y_true, y_pred)
+
+    cm_display = ConfusionMatrixDisplay(confusion_matrix= cm)
+
+    cm_display.plot()
+    plt.show()
+
+    return cm
+
+def TrueClass(init_df, thresh):
+    """Takes in init_df and thresh (which is the original thresh of the data), returns the array_like of the true values as y_true. 
+    To actually use our CM, we need to implement a code that will collect the classes of all rows."""
+
+    init_shape = init_df.shape
+
+    class_array= np.full(shape=(init_shape[0],), fill_value = -1 ,dtype=int)
+    
+    #create a non-shaped array of equal length to the row number of initial data
+
+    counter = 0
+    for i in range(init_shape[0]):
+        #for all the entries in the initial dataset, we input if it is gv, npv, or soil
+        
+        if float(init_df.iloc[i,1]) >= thresh:
+            class_array[counter] = 0
+            #ie gv
+
+        if  float(init_df.iloc[i,2]) >= thresh:
+            class_array[counter] = 1
+            #ie npv
+        
+        if float(init_df.iloc[i,3]) >= thresh:
+            class_array[counter] = 2
+            #ie soil
+        #with this complete, we now have the initial classification array
+        counter = counter+1
+
+    return class_array
+
+#endregion
+
+#region Testing Pipeline
+
+"""Currently WIP, planning to implement this pipeline which will get an input of best EM determination technique and then
+spit out how good of EMs it predicts within the context of a very specific unmixing algorithm. This will allow us to 
+run through a lot of algorithms and determine which method gets the best EM for which method. I am predicting that the 
+best EMs will be the same throughout different unmixing algos, but still, it is good to check as many metrics as possible."""
+
+#endregion
+
+#region Testing grounds
+
+"""
+Just your average testing ground.
+"""
+
+Df_PCA = PCAnalysis(7,56,80,Df_BigDataImperfect)
+
+"""
+
+Find_Centroid(Df_Class)
 
 Df_Class = Collect_Class(Df_PCA, Predictions, 1)
 
-Find_Centroid(Df_Class)
 """
 
-#Df_PCA = PCAnalysis_DetailedOutput(10,20,20,Df_BigData)
-#Array_PCA = Df_PCA.to_numpy()
+KNN_Algo = KNN_Fit(Df_PCA, Df_BigDataImperfect, 4, 0.975)
+Predictions = KNN_Algo.predict(Df_PCA)
+
+Actural = TrueClass(Df_BigDataImperfect, 0.95)
+
+HowTrue(Actural, Predictions)
+
+'''
+EM, KMC = KMC_Fit(Df_PCA, 3, "lloyd")
+Predictions = KMC.labels_
+Predictions = KNN_Algo.predict(Df_PCA)
+
+Actual = TrueClass(Df_BigDataImperfect, 0.95)
+
+HowTrue(Actual, Actual)
+
+HowTrue(Actual, Predictions)'''
 
 print("Done")
+
+#endregion
+
