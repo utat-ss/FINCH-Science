@@ -32,75 +32,72 @@ from sklearn.metrics import ConfusionMatrixDisplay
 
 #region Part 1: Data Seperation
 
-'''
-Jadon's code for Data Seperation Goes Here.
-
-Requires:
-
-Seperator(input_db (the input), seperation (other options than 60-40), abundance_thresh (thresh ), lambda_range):
-    returns training_db, validation_db
-
-'''
-
-def separate_spectral_library(library_file, output_dir):
-    #Open file
-    try:
-        df = pd.read_csv(library_file)
-    except FileNotFoundError:
-        print(f"File '{library_file}' not found.")
-        return
-
-    #Extract wavelength values from the header (assuming the first row is the header). They should be just the number (no units)
-    try:
-      wavelengths = [float(col) for col in df.columns[7:]] #DEPENDS on the input file (replace the "7" with the first numeric column)
-    except ValueError:
-        print("Look for the first numeric column and put that column number in df.columns[HERE:].")
-        return
-
-    valid_wavelengths_indices = [i for i, wl in enumerate(wavelengths) if 900 <= wl <= 1700] #change numbers here if you want to change the range of wavelengths
-
-    if not valid_wavelengths_indices: 
-        print("No wavelengths found within the 900-1700nm range.")
-        return
-
-    #Filter the DataFrame to include only the valid wavelengths
-    df_filtered = df.iloc[:, [0] + [i+1 for i in valid_wavelengths_indices]] #Include the first column (sample names (if it's not, change the "0")) and then the valid wavelength columns
-
-    #Rename columns with correct wavelength values
-    new_columns = [df.columns[0]] + [wavelengths[i] for i in valid_wavelengths_indices]
-    df_filtered.columns = new_columns
-
-    for index, row in df_filtered.iterrows():
-        spectrum_name = row.iloc[0] #Assumes first column is spectrum name/title (IF NOT, replace "0" with whichever column it is)
-        spectrum_data = row.iloc[1:]  #Data (the 1 doesn't really matter because you're parsing through only the relevant wavelengths)
-
-        #Create a DataFrame for each spectrum
-        spectrum_df = pd.DataFrame({"Wavelength (nm)": spectrum_data.index, "Reflectance/Intensity": spectrum_data.values}) #change the table titles here
-        spectrum_df = spectrum_df.set_index("Wavelength (nm)") #MAKE SURE THIS NAME IS THE SAME AS THE LINE ABOVE
-        
-        #output file
-        output_filename = f"{output_dir}/{spectrum_name}.csv" #Use spectrum name as the filename
-
-        try:
-            spectrum_df.to_csv(output_filename)
-            #print(f"Spectrum '{spectrum_name}' saved as {output_filename}") #uncomment out if you want like 300 confirmation messages
-        except Exception as e:
-            print(f"Error saving spectrum '{spectrum_name}': {e}")
-
-
-if __name__ == "__main__":
-    library_file = "C:\\Users\\Jadon\\Downloads\\original_data.csv"  #REPLACE with your own path (keep double backslashes)
-    output_dir = "C:\\Users\\Jadon\\Downloads\\output_spectra"  #REPLACE with your own directory (keep double backslashes)
-    #OPTIONAL!!!!! uncomment out if you wanna let it make the directory automatically
-    # import os
-    # if not os.path.exists(output_dir):
-    #     os.makedirs(output_dir)
-    separate_spectral_library(library_file, output_dir) #calling function
-
-
-
-
 #region Definitions
+
+def Seperate_Combine(Input_Handle: str, seperation_constant: float=0.6, abundance_thresh: float=0.90, detailed_output: bool = False):
+
+    """
+    This function seperates the database into a training and vallidation database.
+
+    Parameters
+        Input_Handle (str): The string of the initial .csv file
+        seperation_constant (0<float<1): How much of the initial .csv file do we want to put into the training file
+        abundance_thresh (0<float<=1): What is the threshold to classify something as an endmember
+        detailed_output (bool=False): If you want to output Training and Validation detailed
+
+    Returns
+        Df_Training (pd.DataFrame): Pandas dataframe that we will do the entire training in
+        Df_Validation (pd.DataFrame): Pandas dataframe that we will do the validation with
+
+        Additional:
+        Df_EM (pd.DataFrame): EM data
+        Df_Spectra (pd.DataFrame): Spectra data
+        Df_Training_EM (pd.DataFrame): The training EM data
+        Df_Validation_EM (pd.DataFrame): The validation EM data
+        Df_Training_Spectra (pd.DataFrame): The training spectra
+        Df_Validation_Spectra (pd.DataFrame): The validation spectra
+    """
+
+    df = pd.read_csv(Input_Handle)
+
+    df = df.reset_index().rename(columns={'index': 'orig_index'})
+
+    mask_EM = (abundance_thresh<= df['gv_fraction']) | (abundance_thresh<= df['npv_fraction']) | (abundance_thresh<- df['soil_fraction'])
+
+    Df_EM = df[mask_EM]
+    Df_Spectra = df[~mask_EM]
+
+    rand_values = np.random.rand(len(Df_EM))
+    Df_Training_EM = Df_EM[rand_values >= seperation_constant]
+    Df_Validation_EM = Df_EM[rand_values < seperation_constant]
+
+    rand_values = np.random.rand(len(Df_Spectra))
+    Df_Training_Spectra = Df_Spectra[rand_values >= seperation_constant]
+    Df_Validation_Spectra = Df_Spectra[rand_values < seperation_constant]
+
+    Df_Training = pd.concat([Df_Training_EM,Df_Training_Spectra], ignore_index=True)
+    Df_Validation = pd.concat([Df_Validation_EM, Df_Validation_Spectra], ignore_index=True)
+
+    Df_Training = Df_Training.sort_values("orig_index").reset_index(drop=True)
+    Df_Validation = Df_Validation.sort_values("orig_index").reset_index(drop=True)
+
+    Df_Training = Df_Training.drop(columns=["orig_index"])
+    Df_Validation = Df_Validation.drop(columns=["orig_index"])
+
+    if detailed_output == True:
+
+        Df_EM = Df_EM.drop(columns=["orig_index"])
+        Df_Spectra = Df_Spectra.drop(columns=["orig_index"])
+        Df_Training_EM = Df_Training_EM.drop(columns=["orig_index"])
+        Df_Validation_EM = Df_Validation_Spectra.drop(columns=["orig_index"])
+        Df_Training_Spectra = Df_Training_Spectra.drop(columns=["orig_index"])
+        Df_Validation_Spectra = Df_Validation_Spectra.drop(columns=["orig_index"])
+
+        return Df_Training, Df_Validation, Df_EM, Df_Spectra, Df_Training_EM, Df_Validation_EM, Df_Training_Spectra, Df_Validation_Spectra
+    
+    else:
+
+        return Df_Training, Df_Validation
 
 #endregion
 
