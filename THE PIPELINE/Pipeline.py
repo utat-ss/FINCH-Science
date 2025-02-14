@@ -3,7 +3,7 @@ THE PIPELINE
 
 This pipeline is crucial as it gives capability to do testing easily.
 
-It is 
+This is dope stuff.
 
 '''
 
@@ -12,6 +12,7 @@ It is
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy as sci
 import math
 import random
 
@@ -28,7 +29,6 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 
 #endregion 
-
 
 #region Part 1: Data Seperation
 
@@ -84,7 +84,7 @@ def Seperate_Combine(Input_Handle: str, seperation_constant: float=0.6, abundanc
     Df_Training = Df_Training.drop(columns=["orig_index"])
     Df_Validation = Df_Validation.drop(columns=["orig_index"])
 
-    if detailed_output == True:
+    if detailed_output:
 
         Df_EM = Df_EM.drop(columns=["orig_index"])
         Df_Spectra = Df_Spectra.drop(columns=["orig_index"])
@@ -536,26 +536,36 @@ def Find_mrEMs_KNN_or_KMC(Df_Init: pd.DataFrame, Df_PCA: pd.DataFrame, Predicts:
 #region Definitions
 
 def GradientDescent_SOO_RMSE(Df_Init: pd.DataFrame, Df_mrEMs: pd.DataFrame, plot_results: bool = False):
+
     """
     Estimate fractional abundances with sum-to-one and greater-than-zero constraints using a linear spectral mixing model.
 
-    Parameters:
+    Parameters
         Df_Init (pd.DataFrame): A DataFrame where each row represents a spectral measurement
                             and each column represents a wavelength or spectral band.
         Df_mrEMs (pd.DataFrame): A DataFrame where each row represents an endmember spectrum
                             [0]: GV, [1]: NPV, [2]: Soil
                             and each column represents the corresponding wavelength or spectral band.
 
-    Returns:
-        Df_Abundances (pd.DataFrame): A DataFrame with estimated fractional abundances for each spectrum
+    Returns
+
+        M_calculated_abundance (np.array):Matrix of calculated abundances, each row is the spectra and columns are the EM
+        M_expected_abundance (np.array): Matrix of expected abundances, each row is the spectra and columns are the EM
+        M_differences (np.array): The matrix of differences (calculated - expected) in each row
+        total_differences (np.array): The sum(abs())/n across each class group
+
         overall_rmse (float): The overall RMSE between the original spectra and the reconstructed spectra
         individual_rmse_series (pd.Series): A Series containing the RMSE for each individual spectrum
-
     
     This function performs sequential optimization (gradient descent) for each spectrum using the RMSE of the entire spectrum of the difference in original by reconstructed. 
 
     Aidan's work, modified by Ege to fit the nomenclature of THE PIPELINE.
     """
+
+    #This is an addition to Aidan's original code, here, I form the matrix of actual abundances \
+    Df_Init_Dropped = Df_Init.drop(Df_Init.columns.difference(['gv_fraction', 'npv_fraction', 'soil_fraction']), 1 , inplace=True)
+    M_expected_abundance = Df_Init_Dropped.to_numpy()
+
     def objective(fractions, spectrum, endmembers):
         # Objective function: Mean squared error for a single spectrum
         reconstructed_spectrum = np.dot(fractions, endmembers)
@@ -572,7 +582,6 @@ def GradientDescent_SOO_RMSE(Df_Init: pd.DataFrame, Df_mrEMs: pd.DataFrame, plot
     This comes from the assumption that the mixture is linear and thus a weighted sum of the sprectra in an endmember by their abundances.
     
     The MSE is then calculated to feed back into the optimization.
-    
     '''
 
     def constraint_sum_to_one(fractions):
@@ -651,7 +660,6 @@ def GradientDescent_SOO_RMSE(Df_Init: pd.DataFrame, Df_mrEMs: pd.DataFrame, plot
         The gradient itself is calculated numerically through the finite difference method.
         The numeric solution is calculated whilst considering the constraints.
         
-        
         options={'disp': False} does not print each step of the minimization process.
         '''
 
@@ -678,27 +686,112 @@ def GradientDescent_SOO_RMSE(Df_Init: pd.DataFrame, Df_mrEMs: pd.DataFrame, plot
     
     # Convert the final estimated fractions back to a DataFrame
     Df_Abundances = pd.DataFrame(all_fractions, index=Df_Init.index, columns=Df_mrEMs.index)
+    M_calculated_abundance = Df_Abundances.to_numpy()
+
+    M_differences=M_calculated_abundance - M_expected_abundance
     
+    total_differences = (np.sum(abs(M_differences), axis= 0))/M_differences.shape[0]
+
     # Create a Series for individual RMSE values
     individual_rmse_series = pd.Series(individual_rmse, index=Df_Init.index, name='RMSE')
 
     # Calculate the overall RMSE across all spectra
     overall_rmse = np.mean(individual_rmse)
-    
-    return Df_Abundances, overall_rmse, individual_rmse_series
+
+    return M_calculated_abundance, M_expected_abundance, M_differences, total_differences, overall_rmse, individual_rmse_series
 
 def GradientDescent_SOO_SFA():
 
 
     return #Df_Abundances, overall_rmse, individual_rmse_series
 
-def MOO_SFA():
+def MOO_SFA(Df_Init: pd.DataFrame, Df_mrEMs: pd.DataFrame, plot_results: bool = False):
+
+#####!!!!! seems like I cannot get this to work, for anyone interested, I can send a link to the jupyter notebook I used !!!!!#####
 
 
-    return #Df_Abundanes, overall_rmse, individual_rmse_series 
+    """
+    Estimate fractional abundances using multiple objective optimization and SFA (integral method)
+
+    Parameters
+        Df_Init (pd.DataFrame): Pre-PCA dataframe where each row is a spectral measurement
+        Df_mrEMs (pd.DataFrame): A dataframe where row [0]: gv, [1]: npv, [2]: soil
+        plot_results (bool = False): Decision to plot reconstructed spectrum vs original spectrum
+
+    Returns
+        M_calculated_abundance (np.array):Matrix of calculated abundances, each row is the spectra and columns are the EM
+        M_expected_abundance (np.array): Matrix of expected abundances, each row is the spectra and columns are the EM
+        M_differences (np.array): The matrix of differences (calculated - expected) in each row
+        total_differences (np.array): The sum(abs())/n across each class group
+    """
+
+    #First, we will get easier things out of the way, we will find M_expected_abundance
+    #Remove all the non-fraction columns, then convert it to an array
+
+    Df_Init_Dropped = Df_Init.drop(Df_Init.columns.difference(['gv_fraction', 'npv_fraction', 'soil_fraction']), 1 , inplace=True)
+    M_expected_abundance = Df_Init_Dropped.to_numpy()
+
+    #Over here, we define the solver and area function 
+
+    def Area_Calculator(dataframe, j, m, k):
+    #will calculate the area under the m and kth columns of the jth row in the input file.
+
+        if j<0 or j>= dataframe.shape[0] - 1: #Check if rows make sense
+            raise ValueError(f"Invalid row entered, {j} must be between 0 and {dataframe.shape[0]}")
+        if m<=3 or m>k or k > dataframe.shape[1]: #Check if columns make sense
+            raise ValueError(f"Invalid column entered, {m} must be smaller than {k} but bigger than 0 and {k} must be smaller than {dataframe.shape[1]}")
+    
+        sumresult = 0 #initialize the summation result
+
+        for i in range(m, k +1): #for all columns 
+            average = (float(dataframe.iloc[j,i]) + float(dataframe.iloc[j, i])) /2 #since the data is discrete and area is not defined 
+            #for a singular point, we take the average among different columns and multiply by the difference of wavelengths, 10.
+            #after second thought, maybe I could've just multiplied the value of the column with the wavelength. Trying that and 
+            #seeing if it fixes up some problems might be a good idea.
+            discretearea = average * 10 #multiply average by delta-wavelength
+            sumresult = sumresult + discretearea #add it to the sum result
+    
+        return sumresult #give the sum as a number.
+
+    def System_Solver_MOO():
+        return None
+
+    #Here, we are going to solve the system. First, initialize the solution matrix
+
+    M_calculated_abudance = np.zeros(shape=M_expected_abundance.shape)
+        
+    
+
+    for i in range(M_expected_abundance.shape[0]):
+
+        
+        1
+    '''
+    def System_Solver_MOO(gv_interval1, npv_interval1, soil_interval1, solution1, gv_interval2, npv_interval2, soil_interval2, solution2, gv_interval3, npv_interval3, soil_interval3, solution3):
+    
+    n_var = 3
+    n_obj = 3
+    n_constr = 1
+    xl = np.array[[0,0,0]]
+    xu = np.array[[1,1,1]]
+    
 
 
 
+
+
+    return None
+    '''
+
+    
+
+    #Once everything is done, find the difference matrix and the total differences:
+
+    M_differences = M_calculated_abudance - M_expected_abundance
+
+    total_differences = (np.sum(abs(M_differences), axis= 0))/M_differences.shape[0]
+
+    return M_calculated_abudance, M_expected_abundance, M_differences, total_differences
 
 #endregion
 
@@ -708,11 +801,144 @@ def MOO_SFA():
 
 #region Definitions
 
-#endregion
+def Plot_Truth(M_calculated_abundance: np.array, M_expected_abundance: np.array, all: bool = False):
+
+    """
+    Plots the expected (x) vs calculated (y) across every data point within a specific endmember class
+
+    Parameters
+        M_calculated_abundance (np.array): The array of calculated abundances
+        M_expected_abundance (np.array): The array of expected abundances
+        all (bool): Plot across all EM classes (True) or across select (False)
+
+    Inter-Parameters
+        choice (int): If chose "all" = False, have to specify the class (0: gv, 1: npv, 2: soil) 
+
+    Returns
+        Nothing. Plots.
+    """
+
+    if all == True:
+        colors = ['g','b','r']
+        labels = ['gv', 'npv', 'soil']
+        plt.figure(figsize=(10,6))
+        for i in range(2): plt.plot(M_expected_abundance[:,i], M_calculated_abundance[:,i], colors[i]+'o', label=labels[i])
+        plt.plot(np.linspace(0,1,1000), np.linspace(0,1,1000), color="black", label="Goalline")
+        plt.xlabel("Expected Abundance")
+        plt.ylabel("Calculated Abundance")
+        plt.legend()
+        plt.show
+
+    if all == False:
+
+        choice = int(input("Which class to plot? (0:gv, 1:npv, 2:soil) \n"))
+        plt.figure(figsize=(10,6))
+        plt.plot(M_expected_abundance[:,choice],M_calculated_abundance[:,choice], 'bo')
+        plt.plot(np.linspace(0,1,1000), np.linspace(0,1,1000), color="black", label="Goalline")
+        plt.xlabel("Expected Abundance")
+        plt.ylabel("Calculated Abundance")
+        plt.show()
+
+    return None
+
+def Plot_Fit_Truth(M_calculated_abundance: np.array, M_expected_abundance: np.array, all: bool = False):
+
+    """
+    Plots the expected (x) vs calculated (y) across every data point within a specific endmember class
+
+    Parameters
+        M_calculated_abundance (np.array): The array of calculated abundances
+        M_expected_abundance (np.array): The array of expected abundances
+        all (bool): Plot across all EM classes (True) or across select (False)
+
+    Inter-Parameters
+        choice (int): If chose "all" = False, have to specify the class (0: gv, 1: npv, 2: soil) 
+
+    Returns
+        Nothing. Plots.
+    """
+
+    if all == True:
+        colors = ['g','b','r']
+        labels = ['gv', 'npv', 'soil']
+        plt.figure(figsize=(10,6))
+        for i in range(2): plt.plot(M_expected_abundance[:,i], M_calculated_abundance[:,i], colors[i]+'o', label=(labels[i]+" data"))
+        plt.plot(np.linspace(0,1,1000), np.linspace(0,1,1000), color="black", label="Goalline")
+
+        slope1, intercept1, r_value1, p_value1, std_err1 = sci.stats.linreg(x= M_expected_abundance[:,0],y= M_calculated_abundance[:,0])
+        slope2, intercept2, r_value2, p_value2, std_err2 = sci.stats.linreg(x= M_expected_abundance[:,1],y= M_calculated_abundance[:,1])
+        slope3, intercept3, r_value3, p_value3, std_err3 = sci.stats.linreg(x= M_expected_abundance[:,2],y= M_calculated_abundance[:,2])
+        slopes = [slope1,slope2,slope3]
+        intercepts = [intercept1,intercept2,intercept3]
+        r_values = [r_value1,r_value2,r_value3]
+        p_values = [p_value1,p_value2,p_value3]
+        std_errs = [std_err1,std_err2,std_err3]
+
+        for i in range(3): plt.plot(np.linspace(0,1,1000),((slopes*(np.linspace(0,1,1000)))+intercepts), color=colors[i], label=(labels[i]+" fit"))
+
+        print("R_Values: "+str(r_values))
+        print("P_Values: "+str(p_values))
+        print("Std_Errs: "+str(std_errs))
+
+        plt.xlabel("Expected Abundance")
+        plt.ylabel("Calculated Abundance")
+        plt.legend()
+        plt.show
+
+        print()
+
+    if all == False:
+
+        choice = int(input("Which class to plot? (0:gv, 1:npv, 2:soil) \n"))
+        plt.figure(figsize=(10,6))
+        plt.plot(M_expected_abundance[:,choice],M_calculated_abundance[:,choice], 'bo', label = "Data")
+        plt.plot(np.linspace(0,1,1000), np.linspace(0,1,1000), color="black", label="Goalline")
+
+        slope, intercept, r_value, p_value, std_err = sci.stats.linreg(x= M_expected_abundance[:,choice], y= M_calculated_abundance[:,choice])
+
+        plt.plot(np.linspace(0,1,1000),((slope*(np.linspace(0,1,1000)))+intercept), color = 'b', label= "Fit")
+
+        print("R_Value: "+str(r_value)+", P_Value: "+str(p_value)+", Std_Err: "+str(std_err))
+
+        plt.xlabel("Expected Abundance")
+        plt.ylabel("Calculated Abundance")
+        plt.legend()
+        plt.show()
+
+    return None
+
+def Export_All(M_calculated_abundance: np.array, M_expected_abundance: np.array, out_name:str ):
+
+    out_handle = (out_name if out_name else input("What do you want your output name to be?: "))+".csv"
+
+    entry = {}
+    namelist = ["gv_", "npv_", "soil_"]
+
+    for i in range(3): entry[namelist[i]+"expected"] = M_expected_abundance[:,i]
+    for i in range(3): entry[namelist[i]+"calculated"] = M_calculated_abundance[:,i]
+    
+    Df_Output = pd.DataFrame(entry)
+
+    Df_Output.to_csv(out_handle, encoding='utf-8', index= False)
+
+    return None
 
 #endregion
 
+#endregion
+
+#region Part 6 (Tests): Initialization
 
 
-print("Done")
 
+#endregion
+
+#region Part 7 (Tests): Actual Code
+
+
+
+#endregion
+
+
+
+print("Donezo")
