@@ -3,7 +3,7 @@
 import pandas as pd
 import numpy as np
 from scipy.optimize import minimize
-import math  as gigachad
+from pymoo.core.problem import Problem
 
 #endregion
 
@@ -12,11 +12,7 @@ input_bigdata = r"C:\University\science utat\simpler_data.csv" #the dataset with
 dataframe_bigdata = pd.read_csv(input_bigdata)
 
 input_emdata = r"C:\University\science utat\endmember_perfect_1.csv" #the dataset that only contains EMs, imported for easier implementation
-dataframe_emdata = pd.read_csv(input_emdata) #rather than working with different columns of the same dataframe, if we use different
-#dataframe in the first place, easier to make sense of what the code is trying to do.
-
-n= 2 #how many endmembers we have -1, have not been used yet will be implemented as per Rik's reccomendation of having this code
-#work for any number of inputted n-different endmembers
+dataframe_emdata = pd.read_csv(input_emdata) 
 
 #endregion
 
@@ -27,13 +23,13 @@ Below, we will write the functions to determine the area under the observed grap
 This function is the initial step to the system of eq.
 """
 
-def dope_area_calculatinator_3000(dataframe, j, m, k):
+def Area_Calculator(dataframe, j, m, k):
     #will calculate the area under the m and kth columns of the jth row in the input file.
 
-    if j<0 or j>= dataframe.shape[0] - 1: #check if the rows are not goofy
-        raise ValueError(f"Invalid row entered bozo, {j} must be between 0 and {dataframe.shape[0]}")
-    if m<=3 or m>k or k > dataframe.shape[1]: #check if the columns are not goofy
-        raise ValueError(f"Invalid column entered bozo, {m} must be smaller than {k} but bigger than 0 and {k} must be smaller than {dataframe.shape[1]}")
+    if j<0 or j>= dataframe.shape[0] - 1: #Check if rows make sense
+        raise ValueError(f"Invalid row entered, {j} must be between 0 and {dataframe.shape[0]}")
+    if m<=3 or m>k or k > dataframe.shape[1]: #Check if columns make sense
+        raise ValueError(f"Invalid column entered, {m} must be smaller than {k} but bigger than 0 and {k} must be smaller than {dataframe.shape[1]}")
     
     sumresult = 0 #initialize the summation result
 
@@ -47,45 +43,59 @@ def dope_area_calculatinator_3000(dataframe, j, m, k):
     
     return sumresult #give the sum as a number.
 
-def system_solver_gigachad_sigma_alpha_male_tiktok_skibidi_toilet(gv_interval1, npv_interval1, soil_interval1, solution1, gv_interval2, npv_interval2, soil_interval2, solution2, gv_interval3, npv_interval3, soil_interval3, solution3):
-    #joke name, I am not a zoomer
-    
-    #set up the matrix to be solved:
-    Matrix = np.array([[gv_interval1, npv_interval1, soil_interval1], 
+def System_Solver_SOO(gv_interval1, npv_interval1, soil_interval1, solution1, gv_interval2, npv_interval2, soil_interval2, solution2, gv_interval3, npv_interval3, soil_interval3, solution3):
+    #turns out I havent used this in the first place
+
+    #set up the matrix to be solved (obsolete for now):
+    Matrix = (np.array([[gv_interval1, npv_interval1, soil_interval1], 
                        [gv_interval2, npv_interval2, soil_interval2],
-                       [gv_interval3, npv_interval3, soil_interval3]])
-    
+                       [gv_interval3, npv_interval3, soil_interval3]])).reshape(3,3)
+
     #set up the vector of results
     Vector = np.array([solution1, solution2, solution3])
 
     def obj_function(abundances):
-        residuals = coeff_matrix @ abundances - Vector
-        return np.sum(residuals**2)
 
-    constraints = [{'type': 'eq', 'fun': lambda x: np.sum(x)-1}]
+        residuals = (Matrix @ abundances) - Vector
 
-    bounds = [(0,1)] * coeff_matrix.shape[1]
+        return np.abs(np.sum(residuals))/100
 
-    initial_guess = np.full(coeff_matrix.shape[1], 1 / coeff_matrix.shape[1])
+    constraint = [{'type': 'eq', 'fun': lambda x: np.sum(x)-1}]
 
-    result = minimize(
-        obj_function,
-        initial_guess,
-        bounds=bounds,
-        constraints=constraints,
-        method='SLSQP'
-    )
+    bound = [(0,1)] * coeff_matrix.shape[1]
+
+    randnumber1= float(np.random.rand())
+    randnumber2= float(np.random.rand())
+    randnumber3= float(np.random.rand())
+    rand_sum = randnumber1+randnumber2+randnumber3
+
+    initial_guess = (np.array([[randnumber1/rand_sum], [randnumber2/rand_sum], [randnumber3/rand_sum]])).reshape(3,)
+
+    result = minimize(fun=obj_function, x0=initial_guess, bounds=bound, constraints=constraint, method='SLSQP')
 
     if result.success:
+        
         return result.x  # Optimized abundances
     else:
         raise ValueError("Optimization failed: " + result.message)
 
-    #try:
-    #    result_of_abundances = np.linalg.solve(Matrix, Vector) #solves the abundances, returns a vector of abundances
-    #    return result_of_abundances
-    #except:
-    #    return "There's something wrong with the system. Check if you have the matrix correctly set up, it has to be 3x3 and the vector has to be 1x3."
+    """
+    def System_Solver_MOO(gv_interval1, npv_interval1, soil_interval1, solution1, gv_interval2, npv_interval2, soil_interval2, solution2, gv_interval3, npv_interval3, soil_interval3, solution3):
+    
+    n_var = 3
+    n_obj = 3
+    n_constr = 1
+    xl = np.array[[0,0,0]]
+    xu = np.array[[1,1,1]]
+    
+
+
+
+
+
+    return None
+    """
+
 
 #endregion
 
@@ -100,7 +110,7 @@ round off the found intervals, under a small interval we will lose much more dat
 So, with these optimal intervals, we won't lose as much data when rounding off.
 """
 
-def RVMUSI_5k(guess, dataframe, rows, a, d): 
+def Find_Variance(guess, dataframe, rows, a, d): 
     """
     Takes inputs as initial guess of "guess", input dataframe of "dataframe",
     rows to calculate variance of the areas of the intervals given by guess, a, d.
@@ -115,7 +125,7 @@ def RVMUSI_5k(guess, dataframe, rows, a, d):
         #picks an interval, 
 
         sums = [
-            dope_area_calculatinator_3000(dataframe, row, start, end) #calculates the integral for that interval.
+            Area_Calculator(dataframe, row, start, end) #calculates the integral for that interval.
             for row in rows #under different rows
         ]
         variances_for_intervals.append(np.var(sums)) #appends the variance of those sums under specific intervals for all rows.
@@ -124,18 +134,9 @@ def RVMUSI_5k(guess, dataframe, rows, a, d):
     
     return overall_variance #returns each variance for the interval
 
-#may try to calculate the integrals of different intervals in a row first, and then across different rows
-#this may be a better way to define variance across intervals 
-def different_RVMUSI_5k(guess, dataframe, rows, a, d): #this function is still WIP, nothing to see here.
-
-    b, c = int(round(guess[0])), int(round(guess[1]))
-    variances_for_intervals=[]
-
-    return None
-
 def find_interval(df, rows, a, d): #takes in the dataframe, the rows to find the best interval for, and the a,d boundary columns
 
-    initial_tahmin = [round((a+d)/3), round(2*((a+d)/3))] #tahmin stands for guess in turkish, we are setting up initial guesses
+    initial_guess = [round((a+d)/3), round(2*((a+d)/3))] #we are setting up initial guesses
 
     constraint = [ #the constraint function we are ought to use since the intervals are well ordered,
         #for a set of intervals: [a,b],[b,c],[c,d], we need relations:
@@ -145,8 +146,8 @@ def find_interval(df, rows, a, d): #takes in the dataframe, the rows to find the
     ]
 
     optimize = minimize( #using the minimize function,
-        RVMUSI_5k, #RVMUSI_5k is the thing we are trying to minimize, minimizing the variance
-        initial_tahmin, #the stuff that are going to change
+        Find_Variance, #RVMUSI_5k is the thing we are trying to minimize, minimizing the variance
+        initial_guess, #the stuff that are going to change
         args=(df,rows,a,d), #the arguments are given, check documentation of minimize function
         constraints=constraint, #the constraints are given
         method='SLSQP'#use method
@@ -156,11 +157,16 @@ def find_interval(df, rows, a, d): #takes in the dataframe, the rows to find the
         
         b, c = int(round(optimize.x[0])), int(round(optimize.x[1])) #if the thing is successful, round the column numbers, duh
         optimized_interval = (b,c) #pass this into a tuple
+        
         return optimized_interval #return tuple of optimized b,c, since a,d is known, we do not give it
         
 
     else:
         raise ValueError("Something went wrong: " + optimize.message) #if something went wrong, display why.
+
+
+
+
 
 #endregion
 
@@ -174,10 +180,10 @@ endmembers, we will first calculate the optimal intervals:
 
 #Giving the initial guess rows: 
 
-em_rows = (1,3,4)
+em_rows = (0,2,4) #0th for gv, 1st for npv, 2nd for soil (of the list)
 
-optimized_interval = find_interval(dataframe_emdata, em_rows, 55, 135) #find the optimized interval that has least variance throughout the EMs
-intervals  = [55, optimized_interval[0], optimized_interval[1], 135] #specify the intervals we're going to use
+optimized_interval = find_interval(dataframe_emdata, em_rows, 41, 135) #find the optimized interval that has least variance throughout the EMs
+intervals  = [41, 61, 100, 135] #specify the intervals we're going to use
 
 greenveg_integration_values = [] #greenveg row is 1
 nphotoveg_integration_values = [] #non-photosyn. row is 3
@@ -185,9 +191,16 @@ soil_integration_values = [] #soil row is 4
 #we will have better values as we set up the knn algorithm and determine em's
 
 for i in range(len(intervals) -1): #find the area values for each EM
-    greenveg_integration_values.append(dope_area_calculatinator_3000(dataframe_emdata, 1, intervals[i], intervals[i+1])) 
-    nphotoveg_integration_values.append(dope_area_calculatinator_3000(dataframe_emdata, 3, intervals[i], intervals[i+1]))
-    soil_integration_values.append(dope_area_calculatinator_3000(dataframe_emdata, 4, intervals[i], intervals[i+1]))
+    greenveg_integration_values.append(Area_Calculator(dataframe_emdata, em_rows[0], intervals[i], intervals[i+1])) 
+    nphotoveg_integration_values.append(Area_Calculator(dataframe_emdata, em_rows[1], intervals[i], intervals[i+1]))
+    soil_integration_values.append(Area_Calculator(dataframe_emdata, em_rows[2], intervals[i], intervals[i+1]))
+
+
+######################################
+print(greenveg_integration_values)
+print(nphotoveg_integration_values)
+print(soil_integration_values)
+######################################
 
 #I am assuming here that we take the data into a csv file yada yada yada and we have a specific column to test out, we gotta
 #first calculate the areas of the function. 
@@ -201,32 +214,55 @@ we can at least see if there's any mixed spectra that are true with our calculat
 """
 
 difference_matrix = np.empty(shape=(1,3)) #set up an empty matrix
+good_pred = []
 
-for j in range(200): #for the first 200 rows
+displacement = 1 #starting point for the evaluations
+
+for j in range(1): #for the first 1700 rows
+    print(str(j+displacement)+"th turn")
     values= [] #initialize the values 
     for i in range(len(intervals)-1):
-        values.append(dope_area_calculatinator_3000(dataframe_bigdata, j, intervals[i], intervals[i+1])) #find values of area for row
+        values.append(Area_Calculator(dataframe_bigdata, j+displacement, intervals[i], intervals[i+1])) #find values of area for row
     
     value_vector = np.array(values) #make it a vector
+    print(value_vector)
 
     gv_col = np.array(greenveg_integration_values).reshape(-1,1) #make it into a column
     npv_col = np.array(nphotoveg_integration_values).reshape(-1,1) #make it into a column
     soil_col = np.array(soil_integration_values).reshape(-1,1) #make it into a column
     coeff_matrix = np.hstack((gv_col, npv_col, soil_col)) #combine the columns into a matrix
 
-    solution_row = np.linalg.solve(coeff_matrix, value_vector) #finding the solution row
+    solution_row = System_Solver_SOO(gv_col[0], npv_col[0], soil_col[0], value_vector[0], gv_col[1], npv_col[1], soil_col[1], value_vector[1], gv_col[2], npv_col[2], soil_col[2], value_vector[2]) #finding the solution row
 
     actual_values = [] #initialize the actual abundance values we are intending to find
 
     for i in range(3):
-        actual_values.append(float(dataframe_bigdata.iloc[j, i+1])) #make it into a list
+        actual_values.append(float(dataframe_bigdata.iloc[j+displacement, i+1])) #make it into a list
         actual_values_row = np.array(actual_values) #make it into a row
+
+
 
     difference_row  =solution_row - actual_values_row#subtract the found abundances from expected
 
+
+
+    if np.sum(np.abs(difference_row)) < 0.3:
+        good_pred.append(j+displacement)
+
+    print(solution_row)
+    print("Actual vals: ")
+    print(actual_values_row)
+    print("uuu")
+    print(np.abs(difference_row))
+    print(np.sum(np.abs(difference_row)))
+    print(difference_row)
+
     difference_matrix = np.vstack((difference_matrix, difference_row)) #vertically stack the found differences
 
-print(difference_matrix) #print the difference matrix, the first line will be 0 0 0 since we are initializing the diff_matrix as [0 0 0]
+print(good_pred)
+print(len(good_pred))
+print("Donezo")
 
-
+#print(difference_matrix) #print the difference matrix, the first line will be 0 0 0 since we are initializing the diff_matrix as [0 0 0]
 #endregion
+
