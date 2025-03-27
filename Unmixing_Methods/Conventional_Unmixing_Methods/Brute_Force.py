@@ -137,13 +137,19 @@ def compute_best_combination(index_matrix, endmembers_data, spectra, space_finen
     A_vals = np.linspace(0, 1, space_fineness)
     abundance_matrix = create_abundance_space(A_vals)
     minimum_mses = np.zeros((num_rows, num_combinations))  # Store MSE for each row-combination pair
+    predicted_abundances = [] # Store best predicted abundances for all rows
 
     for row_index in prange(num_rows):  # Iterate through 50 rows (default)
         spectrum = spectra[row_index]
+        minimum_abundances = [] # Reset for each row to save memory 
         for i in prange(num_combinations):  # Parallel processing for combinations
             endmembers = endmembers_data[index_matrix[i]]
             min_mse, min_abundances  = brute_force(endmembers, spectrum,abundance_matrix)
             minimum_mses[row_index, i] = min_mse  # Store MSE
+            minimum_abundances.append(min_abundances)
+        best_index = np.argmin(minimum_mses[row_index]) # Find the abundance combination with the lowest MSE for the current row
+        predicted_abundances.append(minimum_abundances[best_index]) # Store the best predicted abundances for the current row
+        
            
 
     # Compute the average MSE per combination across all 50 rows (manually)
@@ -157,27 +163,36 @@ def compute_best_combination(index_matrix, endmembers_data, spectra, space_finen
     best_avg_mse = avg_mses[best_index]
     best_EM = index_matrix[best_index]
     
-    return best_avg_mse, best_EM
+    return best_avg_mse, best_EM, predicted_abundances
 
 
 # Region Plot
-def plot_abundances(minimum_abundances, true_abundances):
+def plot_abundances(predicted_abundances, true_abundances,number_of_rows):
     # Plot estimated vs actual abundances
+
+    true_A1 = true_abundances[:number_of_rows, 0]
+    true_A2 = true_abundances[:number_of_rows, 1] 
+    true_A3 = true_abundances[:number_of_rows, 2]
+
+    estimated_A1 = predicted_abundances[:, 0]
+    estimated_A2 = predicted_abundances[:, 1]
+    estimated_A3 = predicted_abundances[:, 2]
+
     plt.figure(figsize=(10, 5))
     plt.subplot(1, 3, 1)
-    plt.scatter(true_abundances[0], minimum_abundances[0], c='r', label='A1')
+    plt.scatter(true_A1, estimated_A1, c='r', label='A1')
     plt.xlabel('Actual A1')
     plt.ylabel('Estimated A1')
     plt.plot([0, 1], [0, 1], 'k--')
 
     plt.subplot(1, 3, 2)
-    plt.scatter(true_abundances[1], minimum_abundances[1], c='g', label='A2')
+    plt.scatter(true_A2, estimated_A2, c='g', label='A2')
     plt.xlabel('Actual A2')
     plt.ylabel('Estimated A2')
     plt.plot([0, 1], [0, 1], 'k--')
 
     plt.subplot(1, 3, 3)
-    plt.scatter(true_abundances[2], minimum_abundances[2], c='b', label='A3')
+    plt.scatter(true_A3, estimated_A3, c='b', label='A3')
     plt.xlabel('Actual A3')
     plt.ylabel('Estimated A3')
     plt.plot([0, 1], [0, 1], 'k--')
@@ -203,12 +218,17 @@ if __name__ == "__main__":
     spectra = pd.read_csv(spectrum_file_path).values[:, 56:120].astype(np.float64)
     true_abundances = pd.read_csv(spectrum_file_path).values[:, 1:4].astype(np.float64)
 
-    # Compute best combination across 50 rows
-    best_avg_mse, best_combination = compute_best_combination(index_matrix, endmembers_data, spectra,space_fineness=100, num_rows=50)
-
+    # Compute best combination across n rows with specified space fineness
+    space_fineness = 100
+    number_of_rows = 100
+    best_avg_mse, best_combination, predicted_abundances = compute_best_combination(index_matrix, endmembers_data, spectra,space_fineness, number_of_rows)
+    predicted_abundances = np.array(predicted_abundances)
+    
+    # Plot estimated vs actual abundances
+    plot_abundances(predicted_abundances, true_abundances,number_of_rows)
+    
     print(f"Best average MSE: {best_avg_mse}")
     print(f"Best EM combination (on average): {best_combination}")
 
     end_time = time.time()
     print(f"Total computation time: {end_time - start_time:.2f} seconds")
-
