@@ -178,7 +178,7 @@ def LMM_FAE(spectra: pd.DataFrame, endmembers: pd.DataFrame, plot_results: bool 
 
 
 # =============================================================================
-# All data and formatting for all Spectra and Endmember (em) Spectra 
+# All Data and Formatting for All Spectra and Endmember (em) Spectra 
 # =============================================================================
 
 # Replace the library on your own!! Find on Google Docs... ask Ege.
@@ -212,7 +212,7 @@ intervaled_all_derivative = dataframe_derivative(intervaled_all_scaled)
 
 
 # =============================================================================
-# Formating all optimized abudances from LMM_FAE to compare to real abundances
+# Formating all optimized abudances from LMM_FAE to compare to real abundances: optimized_abundances
 # =============================================================================
 
 def optimized_abundances(em_spectra: pd.DataFrame, all_spectra: pd.DataFrame):
@@ -262,17 +262,6 @@ def plot_abundance_comparison(true_ab_df: pd.DataFrame, optimized_ab_df: pd.Data
 
     plt.show()
 
-
-# If commented out, used for testing/comparison to opt_ab_deriv_intervaled
-
-#opt_ab = optimized_abundances(em_spectra, all_spectra)
-#opt_ab_deriv = optimized_abundances(em_derivative, all_derivative) # Not the derivative of optimized abundance, but the spectra used to get it
-#opt_ab_intervaled = optimized_abundances(intervaled_em_scaled, intervaled_all_scaled)
-
-#plot_abundance_comparison(true_abundances, opt_ab)
-#plot_abundance_comparison(true_abundances, opt_ab_deriv)
-#plot_abundance_comparison(true_abundances, opt_ab_intervaled)
-#plot_abundance_comparison(true_abundances.iloc[0:600], opt_ab_deriv_intervaled.iloc[0:600])
 
 # =============================================================================
 # Called Lines
