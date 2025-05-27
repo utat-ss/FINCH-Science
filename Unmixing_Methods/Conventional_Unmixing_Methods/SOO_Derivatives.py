@@ -10,7 +10,7 @@ from scipy.optimize import minimize
 
 
 # =============================================================================
-# revalues, broad_subset, and subset_index, written by Aidan.
+# Dataframe formating: revalues, broad_subset, and subset_index, written by Aidan.
 # =============================================================================
 
 def refvalues(df):
