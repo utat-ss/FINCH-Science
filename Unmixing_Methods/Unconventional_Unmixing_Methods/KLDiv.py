@@ -7,7 +7,7 @@ For some theory, ask Ege.
 
 import numpy as np
 import pandas as pd
-from scipy.special import kl_div
+from scipy.special import rel_entr, entr
 import matplotlib.pyplot as plt
 
 def kl_divergence_unmixing(spectrum, endmembers):
@@ -18,7 +18,7 @@ def kl_divergence_unmixing(spectrum, endmembers):
     spectrum: numpy array of the spectrum to unnmix of shape (1, wavelength#)
     endmembers: numpy array of the endmembers to unmix of shape (3, wavelength#) where the rows are gv, npv, soil in order
 
-    Retuurns: an array (1,3) of predicted abundances for gv, npv, soil in order
+    Returns: an array (1,3) of predicted abundances for gv, npv, soil in order
     """
 
     # We first have to ensure the spectra and EMs are normalized since KL divergence requires a probability distribution-like input
@@ -28,10 +28,10 @@ def kl_divergence_unmixing(spectrum, endmembers):
 
     # Now we proceed with calculating the KL divergence for each EM
 
-    kl_divergences = np.array([kl_div(spectrum, endmember) for endmember in endmembers])
-
+    kl_divergences = np.array([sum(rel_entr(spectrum, endmember)) for endmember in endmembers])
+    
     """
-    This bit is a bit long. KL divergence is =0 when two inputs are the same, so the smaller KL Div, the more it can explain the spectrum.
+    This part is a bit long. KL divergence is =0 when two inputs are the same, so the smaller KL Div, the more it can explain the spectrum.
     Therefore, we take the inverse of the KL Div to get a more intuitive measure of how well each endmember explains the spectrum; in this 
     case the higher the value, the better it explains the spectrum. After that, we obviously need to normalize the values to get 'abundances'.
     """
@@ -45,12 +45,15 @@ def plot_abundance_comparison(true_ab_df: pd.DataFrame, optimized_ab_df: pd.Data
     """
     Creates a scatter plot comparing optimized abundance (y-axis) with true abundances (x-axis).
     """
+
+    types = ['gv_fraction', 'npv_fraction', 'soil_fraction']
+    colors = ['green', 'blue', 'brown']
     
     # Create a scatter plot for each column (abundance type)
     fig, ax = plt.subplots(figsize=(8, 6))
     
     for column in optimized_ab_df.columns:
-        ax.scatter(optimized_ab_df[column], true_ab_df[column], label=column)
+        ax.scatter(optimized_ab_df[column], true_ab_df[column], label=types[column], color=colors[column])
     
     ax.set_xlabel('Optimized Abundance')
     ax.set_ylabel('True Abundance')
@@ -58,4 +61,63 @@ def plot_abundance_comparison(true_ab_df: pd.DataFrame, optimized_ab_df: pd.Data
     ax.legend()
 
     plt.show()
+
+def plot_single_abundance_comparison(abundance_type: int, true_ab_df: pd.DataFrame, optimized_ab_df: pd.DataFrame, title: str = "Abundance Comparison"):
+    """
+    Creates a scatter plot comparing optimized abundance (y-axis) with true abundances (x-axis).
+    """
+
+    types = ['gv_fraction', 'npv_fraction', 'soil_fraction']
+    colors = ['green', 'blue', 'brown']
+    
+    # Create a scatter plot for each column (abundance type)
+    fig, ax = plt.subplots(figsize=(8, 6))
+    
+    ax.scatter(optimized_ab_df[abundance_type], true_ab_df[abundance_type], label=types[abundance_type], color=colors[abundance_type])
+    
+    ax.set_xlabel('Optimized Abundance')
+    ax.set_ylabel('True Abundance')
+    ax.set_title(title)
+    ax.legend()
+
+    plt.show()
+
+library = pd.read_csv(r"C:\SenkDosya\UTAT\Data\GeneralData\simpler_data_with_rwc_pretty.csv")
+values_library = (library.iloc[:, 7:]).to_numpy()
+abundances_library = (library.iloc[:, 1:4]).to_numpy()
+abundances= np.zeros(shape=(values_library.shape[0], 3))
+
+emlibrary = pd.read_csv(r"C:\SenkDosya\UTAT\Data\EndmemberData\endmember_perfect_1.csv")
+values_emlibrary = (emlibrary.iloc[:, 5:]).to_numpy()
+abundances_emlibrary = (emlibrary.iloc[:, 1:4]).to_numpy()
+
+em_indices = [6,1,3]
+endmembers = values_emlibrary[em_indices, :]
+
+for i in range(values_library.shape[0]):
+    spectrum = values_library[i,:]
+    
+    abundances[i] = kl_divergence_unmixing(spectrum, endmembers)
+
+plot_abundance_comparison(pd.DataFrame(abundances_library), pd.DataFrame(abundances), title="KL Divergence Unmixing Abundance Comparison")
+
+plot_single_abundance_comparison(0, pd.DataFrame(abundances_library), pd.DataFrame(abundances), title="KL Divergence Unmixing Abundance Comparison for Green Vegetation")
+
+# Now with different endmembers
+
+emlibrary = pd.read_csv(r"C:\SenkDosya\UTAT\Data\GeneralData\simpler_data_with_rwc_pretty.csv")
+values_emlibrary = (emlibrary.iloc[:, 7:]).to_numpy()
+abundances_emlibrary = (emlibrary.iloc[:, 1:4]).to_numpy()
+
+em_indices = [117,76,1387]
+endmembers = values_emlibrary[em_indices, :]
+
+for i in range(values_library.shape[0]):
+    spectrum = values_library[i,:]
+    
+    abundances[i] = kl_divergence_unmixing(spectrum, endmembers)
+
+plot_abundance_comparison(pd.DataFrame(abundances_library), pd.DataFrame(abundances), title="KL Divergence Unmixing Abundance Comparison")
+
+plot_single_abundance_comparison(0, pd.DataFrame(abundances_library), pd.DataFrame(abundances), title="KL Divergence Unmixing Abundance Comparison for Green Vegetation")
 
