@@ -10,7 +10,7 @@ import pandas as pd
 from scipy.special import rel_entr, entr
 import matplotlib.pyplot as plt
 
-def kl_divergence_unmixing(spectrum, endmembers):
+def kl_divergence_unmixing(spectrum: np.array, endmembers: np.array) -> np.array:
 
     """
     Parameters:
@@ -82,6 +82,7 @@ def plot_single_abundance_comparison(abundance_type: int, true_ab_df: pd.DataFra
 
     plt.show()
 
+"""
 library = pd.read_csv(r"C:\SenkDosya\UTAT\Data\GeneralData\simpler_data_with_rwc_pretty.csv")
 values_library = (library.iloc[:, 7:]).to_numpy()
 abundances_library = (library.iloc[:, 1:4]).to_numpy()
@@ -121,3 +122,4 @@ plot_abundance_comparison(pd.DataFrame(abundances_library), pd.DataFrame(abundan
 
 plot_single_abundance_comparison(0, pd.DataFrame(abundances_library), pd.DataFrame(abundances), title="KL Divergence Unmixing Abundance Comparison for Green Vegetation")
 
+"""

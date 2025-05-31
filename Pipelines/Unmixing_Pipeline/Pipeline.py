@@ -18,8 +18,6 @@ import random
 
 from scipy.optimize import minimize
 
-from pymoo.core.problem import Problem
-
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import VarianceThreshold
@@ -885,7 +883,7 @@ def Plot_Fit_Truth(M_calculated_abundance: np.array, M_expected_abundance: np.ar
         plt.legend()
         plt.show
 
-        print()
+        return slopes, intercepts, r_values, p_values, std_errs
 
     if all == False:
 
@@ -905,7 +903,7 @@ def Plot_Fit_Truth(M_calculated_abundance: np.array, M_expected_abundance: np.ar
         plt.legend()
         plt.show()
 
-    return None
+        return slope, intercept, r_value, p_value, std_err
 
 def Export_All(M_calculated_abundance: np.array, M_expected_abundance: np.array, out_name:str ):
 
