@@ -39,8 +39,9 @@ def kl_divergence_unmixing(spectrum: np.array, endmembers: np.array, softmax_opt
     if softmax_option:
         kl_divergences = softmax(kl_divergences)
         abundances = kl_divergences / np.sum(kl_divergences)
+
     else:
-        kl_divergences = 1 / (kl_divergences + 1e-4) # small constant added to avoid division by zero
+        kl_divergences = 1 / (kl_divergences + 1e-4) # small constant added to avoid division by zero  # 0 to inf
         abundances = kl_divergences / np.sum(kl_divergences)
 
     return abundances
