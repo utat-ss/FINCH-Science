@@ -7,10 +7,10 @@ For some theory, ask Ege.
 
 import numpy as np
 import pandas as pd
-from scipy.special import rel_entr, entr
+from scipy.special import rel_entr, softmax
 import matplotlib.pyplot as plt
 
-def kl_divergence_unmixing(spectrum: np.array, endmembers: np.array) -> np.array:
+def kl_divergence_unmixing(spectrum: np.array, endmembers: np.array, softmax_option: bool = False) -> np.array:
 
     """
     Parameters:
@@ -36,8 +36,12 @@ def kl_divergence_unmixing(spectrum: np.array, endmembers: np.array) -> np.array
     case the higher the value, the better it explains the spectrum. After that, we obviously need to normalize the values to get 'abundances'.
     """
 
-    kl_divergences = 1 / (kl_divergences + 1e-4) # small constant added to avoid division by zero
-    abundances = kl_divergences / np.sum(kl_divergences)
+    if softmax_option:
+        kl_divergences = softmax(kl_divergences)
+        abundances = kl_divergences / np.sum(kl_divergences)
+    else:
+        kl_divergences = 1 / (kl_divergences + 1e-4) # small constant added to avoid division by zero
+        abundances = kl_divergences / np.sum(kl_divergences)
 
     return abundances
 
@@ -82,44 +86,3 @@ def plot_single_abundance_comparison(abundance_type: int, true_ab_df: pd.DataFra
 
     plt.show()
 
-"""
-library = pd.read_csv(r"C:\SenkDosya\UTAT\Data\GeneralData\simpler_data_with_rwc_pretty.csv")
-values_library = (library.iloc[:, 7:]).to_numpy()
-abundances_library = (library.iloc[:, 1:4]).to_numpy()
-abundances= np.zeros(shape=(values_library.shape[0], 3))
-
-emlibrary = pd.read_csv(r"C:\SenkDosya\UTAT\Data\EndmemberData\endmember_perfect_1.csv")
-values_emlibrary = (emlibrary.iloc[:, 5:]).to_numpy()
-abundances_emlibrary = (emlibrary.iloc[:, 1:4]).to_numpy()
-
-em_indices = [6,1,3]
-endmembers = values_emlibrary[em_indices, :]
-
-for i in range(values_library.shape[0]):
-    spectrum = values_library[i,:]
-    
-    abundances[i] = kl_divergence_unmixing(spectrum, endmembers)
-
-plot_abundance_comparison(pd.DataFrame(abundances_library), pd.DataFrame(abundances), title="KL Divergence Unmixing Abundance Comparison")
-
-plot_single_abundance_comparison(0, pd.DataFrame(abundances_library), pd.DataFrame(abundances), title="KL Divergence Unmixing Abundance Comparison for Green Vegetation")
-
-# Now with different endmembers
-
-emlibrary = pd.read_csv(r"C:\SenkDosya\UTAT\Data\GeneralData\simpler_data_with_rwc_pretty.csv")
-values_emlibrary = (emlibrary.iloc[:, 7:]).to_numpy()
-abundances_emlibrary = (emlibrary.iloc[:, 1:4]).to_numpy()
-
-em_indices = [117,76,1387]
-endmembers = values_emlibrary[em_indices, :]
-
-for i in range(values_library.shape[0]):
-    spectrum = values_library[i,:]
-    
-    abundances[i] = kl_divergence_unmixing(spectrum, endmembers)
-
-plot_abundance_comparison(pd.DataFrame(abundances_library), pd.DataFrame(abundances), title="KL Divergence Unmixing Abundance Comparison")
-
-plot_single_abundance_comparison(0, pd.DataFrame(abundances_library), pd.DataFrame(abundances), title="KL Divergence Unmixing Abundance Comparison for Green Vegetation")
-
-"""
