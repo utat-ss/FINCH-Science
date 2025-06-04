@@ -181,8 +181,8 @@ def LMM_FAE(spectra: pd.DataFrame, endmembers: pd.DataFrame, plot_results: bool 
 # All Data and Formatting for All Spectra and Endmember (em) Spectra 
 # =============================================================================
 
-# Replace the library on your own!! Find on Google Docs... ask Ege.
-library = pd.read_csv(r"C:\Users\Zara\OneDrive - University of Toronto\Desktop\UTAT\Data_Files\fractional-cover-simulated-vswir-dataset-version-2--original-10nm-spectra.csv")
+# Replace the library on your own!! Find on Google Docs...
+library = pd.read_csv(r"C:\Your\Path\OneDrive - University of Toronto\Desktop\UTAT\Data_Files\fractional-cover-simulated-vswir-dataset-version-2--original-10nm-spectra.csv")
 
 true_abundances = library.iloc[:, [2, 3, 5]]
 
