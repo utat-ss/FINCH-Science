@@ -1,5 +1,5 @@
 # Technique: Intervaled Wavelength Range --> Scaled Spectra --> Derivative of Reflectances. Feel free to change the intensity of each.
-# Download and replace library (line 182) from your computer.
+# 1. Download and replace library (line 182) from your computer. 2. Uncomment all variables. 
 # When run, this file will produce a comparison of True abundances of green vegetation (GV), dead vegetation (NPV), and Soil from our "library" to optimized 
 # abundances found using LMM_FAE.  
 
@@ -181,34 +181,36 @@ def LMM_FAE(spectra: pd.DataFrame, endmembers: pd.DataFrame, plot_results: bool 
 # All Data and Formatting for All Spectra and Endmember (em) Spectra 
 # =============================================================================
 
+
+# Uncomment all of these variables.
 # Replace the library on your own!! Find on Google Docs...
-library = pd.read_csv(r"C:\Your\Path\OneDrive - University of Toronto\Desktop\UTAT\Data_Files\fractional-cover-simulated-vswir-dataset-version-2--original-10nm-spectra.csv")
+#library = pd.read_csv(r"C:\Your\Path\OneDrive - University of Toronto\Desktop\UTAT\Data_Files\fractional-cover-simulated-vswir-dataset-version-2--original-10nm-spectra.csv")
 
-true_abundances = library.iloc[:, [2, 3, 5]]
+#true_abundances = library.iloc[:, [2, 3, 5]]
 
-all_spectra = refvalues(library) # And their associated reflectances
+#all_spectra = refvalues(library) # And their associated reflectances
 
-em_spectra = subset_index(all_spectra, [47,33,11]) # Randomly chosen combination of endmember indexes [gv, npv, soil], change per test.
+#em_spectra = subset_index(all_spectra, [47,33,11]) # Randomly chosen combination of endmember indexes [gv, npv, soil], change per test.
 
 
 # Derivative versions (used for testing only)
 
-em_derivative = dataframe_derivative(em_spectra)
+#em_derivative = dataframe_derivative(em_spectra)
 
-all_derivative = dataframe_derivative(all_spectra)
+#all_derivative = dataframe_derivative(all_spectra)
 
 
 # Inversion #1: Wavelength Range Intervaled --> Spectra Scaled --> Derivative of Reflectance Taken
 
-intervaled_all_spectra = broad_subset(all_spectra, 110, 124) # Mixed spectra for wavelengths between 1500 and 1640, picked for best result and within FINCH range
+#intervaled_all_spectra = broad_subset(all_spectra, 110, 124) # Mixed spectra for wavelengths between 1500 and 1640, picked for best result and within FINCH range
 
-intervaled_all_scaled = (intervaled_all_spectra * 100000)
+#intervaled_all_scaled = (intervaled_all_spectra * 100000)
 
-intervaled_em_scaled = subset_index(intervaled_all_scaled, [47,33,11])
+#intervaled_em_scaled = subset_index(intervaled_all_scaled, [47,33,11])
 
-intervaled_em_derivative = dataframe_derivative(intervaled_em_scaled)
+#intervaled_em_derivative = dataframe_derivative(intervaled_em_scaled)
 
-intervaled_all_derivative = dataframe_derivative(intervaled_all_scaled)
+#intervaled_all_derivative = dataframe_derivative(intervaled_all_scaled)
 
 
 # =============================================================================
@@ -267,8 +269,9 @@ def plot_abundance_comparison(true_ab_df: pd.DataFrame, optimized_ab_df: pd.Data
 # Called Lines
 # =============================================================================
 
-opt_ab_deriv_intervaled = optimized_abundances(intervaled_em_derivative, intervaled_all_derivative)
+# Uncomment These call lines
+#opt_ab_deriv_intervaled = optimized_abundances(intervaled_em_derivative, intervaled_all_derivative)
 
-plot_abundance_comparison(true_abundances, opt_ab_deriv_intervaled)
+#plot_abundance_comparison(true_abundances, opt_ab_deriv_intervaled)
 
 
