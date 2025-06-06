@@ -5,7 +5,7 @@ from scipy.optimize import minimize
 from typing import Callable
 
 
-def LMM_FAE(spectra: pd.DataFrame, 
+def SOO_RMSE_Randomized(spectra: pd.DataFrame, 
             endmembers: pd.DataFrame, 
             plot_results: bool = False, 
             n_starts: int = 5,
