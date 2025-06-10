@@ -26,7 +26,9 @@ class MLP(nn.Module):
         self.o_dim = cfg_MLP['output_dim']
         self.hidden_layers = cfg_MLP['hidden_layers']
 
-        self.activation_function = cfg_MLP.get(nn.ReLU, nn.Sigmoid, nn.LeakyReLU, nn.ELU, nn.Tanh, nn.SiLU)
+        activation_name = cfg_MLP.get("ReLU", "Sigmoid", "LeakyReLU", "ELU", "Tanh", "SiLU")
+        activation_map = {"ReLU": nn.ReLU(), "Sigmoid": nn.Sigmoid(), "LeakyReLU": nn.LeakyReLU(), "ELU": nn.ELU(), "Tanh": nn.Tanh(), "SiLU": nn.SiLU()}
+        self.activation_function = activation_map.get(activation_name, nn.ReLU)
 
         # Define the MLP
         modules = []
@@ -34,7 +36,7 @@ class MLP(nn.Module):
         modules.append(nn.Linear(in_features=self.i_dim, out_features=self.hidden_layers[0]))
         modules.append(self.activation_function)
 
-        for i in range(len(self.hidden_layers)):
+        for i in range(len(self.hidden_layers)-1):
             modules.append(nn.Linear(in_features=self.hidden_layers[i], out_features=self.hidden_layers[i+1]))
             modules.append(self.activation_function)
 
@@ -42,14 +44,48 @@ class MLP(nn.Module):
         modules.append(self.activation_function)
 
         self.MLP = nn.Sequential(*modules)
-
-        return self.MLP
     
-    def _call_MLP(self, input):
+    def forward(self, input):
+        return self.MLP(input)
+    
+class CNN1D(nn.Module):
 
-        output = self.MLP(input)
+    def __init__(self, cfg_ConvMLP: dict):
+
+        # Take in the necessary definitions
+        self.i_dim = cfg_ConvMLP['input_dim']
+        self.o_dim = cfg_ConvMLP['output_dim']
+        self.hidden_linear_dim = cfg_ConvMLP['hidden_linear_dim']
+
+        self.hidden_conv_dim = cfg_ConvMLP['hidden_conv_dim']
+        self.hidden_conv_kernelsize = cfg_ConvMLP['hidden_conv_kernelsize']
+        self.hidden_conv_stride = cfg_ConvMLP['hidden_conv_stride']
+        self.hidden_conv_padding = cfg_ConvMLP['hidden_conv_padding']
+        self.hidden_conv_maxpool_kernelsize = cfg_ConvMLP['hidden_conv_maxpool_kernelsize']
+        self.hidden_conv_maxpool_stride = cfg_ConvMLP['hidden_conv_maxpool_stride']
+
+        activation_map = {"Linear_ReLU": nn.ReLU(), "Linear_Sigmoid": nn.Sigmoid(), "Linear_LeakyReLU": nn.LeakyReLU(), "Linear_ELU": nn.ELU(), "Linear_Tanh": nn.Tanh(), "Linear_SiLU": nn.SiLU()}
+        linear_activation_name = cfg_ConvMLP.get("Linear_ReLU", "Linear_Sigmoid", "Linear_LeakyReLU", "Linear_ELU", "Linear_Tanh", "Linear_SiLU")
+        self.linear_activation_function = activation_map.get(linear_activation_name, nn.ReLU)
+        conv_activation_name = cfg_ConvMLP.get("Conv_ReLU", "Conv_Sigmoid", "Conv_LeakyReLU", "Conv_ELU", "Conv_Tanh", "Conv_SiLU")
+        self.conv_activation_function = activation_map.get(conv_activation_name, nn.ReLU)
+
+        # Now we construct the model the model has convolution layers first and then the MLP part
+        modules = []
+
+        assert len(self.hidden_conv_dim) == len(self.hidden_conv_kernelsize) == len(self.hidden_conv_stride) == len(self.hidden_conv_maxpool_stride) == len(self.hidden_conv_maxpool_kernelsize), "All conv config lists must be same length"
         
-        return output
+        # Initial Conv Layer
+        modules.append(nn.Conv1d(in_channels=self.i_dim, out_channels=self.hidden_conv_dim[0], kernel_size=self.hidden_conv_kernelsize[0], stride=self.hidden_conv_stride[0], padding=self.hidden_conv_padding[0]))
+        modules.append(self.conv_activation_function)
+
+        # Now repeating Conv Layers
+
+        if len(self.hidden_conv_dim) != 1:
+            None
+
+
+
 
 def train_Network(cfg_NN: dict, cfg_dataset: dict, cfg_train: dict, cfg_plots: dict, input: np.array):
 
