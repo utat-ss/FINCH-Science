@@ -86,7 +86,6 @@ class CNN1D_MLP(nn.Module):
         sequence_length = self.i_dim # We have to keep track of how the signals' length changes as it goes through, we'll update this frequently
 
         assert len(self.hidden_conv_dim) == len(self.hidden_conv_kernelsize) == len(self.hidden_conv_stride) == len(self.hidden_conv_padding) == len(self.conv_activation_list), "All conv config lists must be same length (excluding pooling)"
-        assert len(self.conv_activation_list) == (len(self.hidden_conv_dim)+1), ""
 
         # Initial Conv Layer
         cnn_layers.append(nn.Conv1d(in_channels=self.input_channels, out_channels=self.hidden_conv_dim[0], kernel_size=self.hidden_conv_kernelsize[0], stride=self.hidden_conv_stride[0], padding=self.hidden_conv_padding[0])) 
