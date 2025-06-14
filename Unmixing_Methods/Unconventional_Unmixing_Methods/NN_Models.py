@@ -55,6 +55,7 @@ class MLP(nn.Module):
 class CNN1D_MLP(nn.Module):
 
     def __init__(self, cfg_CNNMLP: dict):
+        super().__init__()
 
         # Take in the necessary definitions
         # IO
@@ -142,7 +143,12 @@ class CNN1D_MLP(nn.Module):
 
     def forward(self, input):
         return self.CNN1D_MLP(input)
+    
+class FNO(nn.Module):
+    def __init__(self, ):
+        super().__init__()
 
+        
 
 def train_Network(cfg_NN: dict, cfg_dataset: dict, cfg_train: dict, cfg_plots: dict, input: np.array):
 
