@@ -8,6 +8,7 @@ we will run the code in the .ipynb file to test it.
 import torch.nn as nn
 import torch
 import torchvision
+from torch.utils.data import TensorDataset, DataLoader
 
 import pandas as pd
 import numpy as np
@@ -28,7 +29,7 @@ class MLP(nn.Module):
         self.hidden_layers = cfg_MLP['hidden_layers']
 
         self.activation_list = cfg_MLP['linear_activation_list']
-        activation_map = {"ReLU": nn.ReLU(), "Sigmoid": nn.Sigmoid(), "LeakyReLU": nn.LeakyReLU(), "ELU": nn.ELU(), "Tanh": nn.Tanh(), "SiLU": nn.SiLU()}
+        activation_map = {"ReLU": nn.ReLU(), "Sigmoid": nn.Sigmoid(), "LeakyReLU": nn.LeakyReLU(), "ELU": nn.ELU(), "Tanh": nn.Tanh(), "SiLU": nn.SiLU(),"Identity": nn.Identity()}
         for i, key in enumerate(self.activation_list): self.activation_list[i] = activation_map[key]
 
         # Define the MLP
@@ -71,15 +72,15 @@ class CNN1D_MLP(nn.Module):
         self.hidden_conv_kernelsize = cfg_CNNMLP.get('hidden_conv_kernelsize', [3] * len(self.hidden_conv_dim)) # Gets a default of 3
         self.hidden_conv_stride = cfg_CNNMLP.get('hidden_conv_stride', [1] * len(self.hidden_conv_dim)) # Gets a default of 1
         self.hidden_conv_padding = cfg_CNNMLP.get('hidden_conv_padding', [k // 2 for k in self.hidden_conv_kernelsize]) # Gets a default of 'same' padding
-        self.hidden_conv_pooltype = cfg_CNNMLP.get('hidden_conb_pool_type', None)
-        self.hidden_conv_pool_kernelsize = cfg_CNNMLP.get('hidden_conv_pool_kernelsize', None)
-        self.hidden_conv_pool_stride = cfg_CNNMLP.get('hidden_conv_pool_stride', None)
+        self.hidden_conv_pooltype = cfg_CNNMLP.get('hidden_conv_pooltype', []) ###################
+        self.hidden_conv_pool_kernelsize = cfg_CNNMLP.get('hidden_conv_pool_kernelsize', [])
+        self.hidden_conv_pool_stride = cfg_CNNMLP.get('hidden_conv_pool_stride', [])
 
         # Activation functions
         activation_map = {"Linear_ReLU": nn.ReLU(), "Linear_Sigmoid": nn.Sigmoid(), "Linear_LeakyReLU": nn.LeakyReLU(), "Linear_ELU": nn.ELU(), "Linear_Tanh": nn.Tanh(), "Linear_SiLU": nn.SiLU()}
         self.linear_activation_list = cfg_CNNMLP['linear_activation_list']
         for i, key in enumerate(self.linear_activation_list): self.linear_activation_list[i] = activation_map[key]
-        self.conv_activation_list = cfg_CNNMLP['linear_activation_list']
+        self.conv_activation_list = cfg_CNNMLP['conv_activation_list']
         for i, key in enumerate(self.conv_activation_list): self.conv_activation_list[i] = activation_map[key]
 
         # Construct the model, it has convolution layers first and then the MLP part
@@ -124,7 +125,8 @@ class CNN1D_MLP(nn.Module):
             
                 sequence_length = (sequence_length - self.hidden_conv_pool_kernelsize[i+1]) // self.hidden_conv_pool_stride[i+1] + 1 # Update length after pool layer
 
-        self.post_cnn_sequence_length = self.i_dim * sequence_length
+        self.post_cnn_sequence_length = self.hidden_conv_dim[-1] * sequence_length
+
 
         # Initial MLP Layer
         mlp_layers = []
@@ -141,8 +143,8 @@ class CNN1D_MLP(nn.Module):
 
         self.CNN1D_MLP = nn.Sequential(*cnn_layers, nn.Flatten(), *mlp_layers)
 
-    def forward(self, input):
-        return self.CNN1D_MLP(input)
+    def forward(self, inputs): #avoid bug if need to call input() for whatever reason in case
+        return self.CNN1D_MLP(inputs)
     
 class FNO(nn.Module):
     def __init__(self, ):
@@ -150,56 +152,84 @@ class FNO(nn.Module):
 
         
 
-def train_Network(cfg_NN: dict, cfg_dataset: dict, cfg_train: dict, cfg_plots: dict, input: np.array):
+def train_Network(cfg_NN, cfg_dataset, cfg_train, cfg_plots, data_array: np.ndarray):
 
-    # First, reshape the dataset to get classification and training data
-    idx_data_trueab_tuple = cfg_dataset['idx_ab_tuple'] # a tuple definin the indices of the training dataset
-    idx_data_range_tuple = cfg_dataset['idx_range_tuple'] # a tuple definition of the training dataset
+    X = data_array[:, cfg_dataset['idx_range_tuple'][0] : cfg_dataset['idx_range_tuple'][1]]
+    Y = data_array[:, cfg_dataset['idx_ab_tuple'][0]   : cfg_dataset['idx_ab_tuple'][1]]
+    
+    #Shuffle
+    perm = np.random.permutation(len(X))
+    X, Y = X[perm], Y[perm]
+    n = len(X)
+    t0, t1 = cfg_train['seperation_ratios'][0], cfg_train['seperation_ratios'][1]
+    i0, i1 = int(n*t0), int(n*t1)
+    X_train,  Y_train  = X[:i0],  Y[:i0]
+    X_val,    Y_val    = X[i0:i1], Y[i0:i1]
+    X_test,   Y_test   = X[i1:],   Y[i1:]
 
-    # Second, define how the training process is going to occur
-    train_regularizer = cfg_train['regularizer'] # NFIY, regularizer for training
-    batch_size = cfg_train['batch_size'] # Self explanatory, batch size. After each batch, validation runs will occur.
-    seperation_ratios = ['seperation_ratios'] # a tuple defining ratios of seperation (%training, %validation, %test)
-
-    # Third, define the plotting configs
-    plot_losses = cfg_plots['plot_losses']
-    plot_errors = cfg_plots['plot_errors']
-    plot_seperately = cfg_plots['plot seperately']
-
-    # Lastly, retrieve the type of NN
-    model_type = cfg_NN['model_type']
-
-
-    # We now preprocess the given dataset.
-    # First step is to randomly sample from the input dataset and seperate it into training, validation, testing
-
-    np.random.shuffle(input)
-
-    num_rows = input.shape[0]
-
-    data_train = input[:round(num_rows*seperation_ratios[0]), idx_data_range_tuple[0]:idx_data_range_tuple[1]]
-    data_train_classification = input[:round(num_rows*seperation_ratios[0]), idx_data_trueab_tuple[0]:idx_data_trueab_tuple[1]]
-
-    data_validate = input[round(num_rows*seperation_ratios[0]):round(num_rows*seperation_ratios[1]), idx_data_range_tuple[0]:idx_data_range_tuple[1]]
-    data_validate_classification = input[round(num_rows*seperation_ratios[0]):round(num_rows*seperation_ratios[1]), idx_data_trueab_tuple[0]:idx_data_trueab_tuple[1]]
-
-    data_test = input[round(num_rows*seperation_ratios[1]):, idx_data_range_tuple[0]:idx_data_range_tuple[1]]
-    data_test_classification = input[round(num_rows*seperation_ratios[1]):, idx_data_trueab_tuple[0]:idx_data_trueab_tuple[1]]
-
-
-    # We now have to initialize the model
-
-    if model_type == 'MLP':
-
+    #DataLoaders
+    batch_size = cfg_train['batch_size']
+    train_dataset = TensorDataset(torch.from_numpy(X_train).float(), torch.from_numpy(Y_train).float())
+    val_dataset   = TensorDataset(torch.from_numpy(X_val).float(), torch.from_numpy(Y_val).float())
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader   = DataLoader(val_dataset,   batch_size=batch_size)
+    
+    test_dataset       = TensorDataset(torch.from_numpy(X_test).float(), torch.from_numpy(Y_test).float())
+    test_loader   = DataLoader(test_dataset, batch_size=batch_size)
+    if cfg_NN['model_type'] == 'MLP':
         model = MLP(cfg_NN)
+    else:
+        model = CNN1D_MLP(cfg_NN)
+    #EDIT THIS LINE IF YOU WANT TO RUN IT ON SMTH ELSE OR COLLAB OR SMTH
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
+    model.to(device)
 
-    # We now train the model and plot at the same time
+    #Loss
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(),
+                                 lr=cfg_train.get('lr', 1e-4))
 
-    optimizer = torch.optim.Adam(model.parameters(), lr= 1e-4)
+    num_epochs = cfg_train.get('num_epochs', 20)
+    history = {'train_loss': [], 'val_loss': []}
 
-    counter = 0
+    # training n validation
+    for epoch in range(1, num_epochs+1):
+        model.train()
+        running_loss = 0.0
+        for xb, yb in train_loader:
+            xb, yb = xb.to(device), yb.to(device)
+            optimizer.zero_grad()
+            preds = model(xb)
+            loss  = criterion(preds, yb)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item() * xb.size(0)
 
-    for i in range((input.shape[0]) - (data_test.shape[0])):
+        epoch_train_loss = running_loss / len(train_loader.dataset)
+        history['train_loss'].append(epoch_train_loss)
 
-        optimizer.zero_grad()
+        # Validation section
+        model.eval()
+        val_loss = 0.0
+        with torch.no_grad():
+            for xb, yb in val_loader:
+                xb, yb = xb.to(device), yb.to(device)
+                preds = model(xb)
+                val_loss += criterion(preds, yb).item() * xb.size(0)
+        epoch_val_loss = val_loss / len(val_loader.dataset)
+        history['val_loss'].append(epoch_val_loss)
 
+        print(f"Epoch {epoch}/{num_epochs}")
+        print(f"Train Loss: {epoch_train_loss:.4f}")
+        print(f"Val Loss: {epoch_val_loss:.4f}")
+
+    model.eval()
+    test_loss = 0.0
+    with torch.no_grad():
+        for xb, yb in test_loader:
+            xb, yb = xb.to(device), yb.to(device)
+            test_loss += criterion(model(xb), yb).item() * xb.size(0)
+    test_loss /= len(test_loader.dataset)
+    print(f"\nFinal test loss: {test_loss:.4f}")
+
+    return model, history, test_loss
