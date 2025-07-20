@@ -13,7 +13,7 @@ from defs.models.CNN import *
 from defs.models.MLP import *
 from defs.models.NIF import *
 
-def train_Network(cfg_NN, cfg_dataset, cfg_train, cfg_plots, data_array: np.ndarray, device, model):
+def train_Network(cfg_dataset, cfg_train, cfg_plots, data_array: np.ndarray, device, model, optimizer, scheduler= None):
 
     X = data_array[:, cfg_dataset['idx_range_tuple'][0] : cfg_dataset['idx_range_tuple'][1]]
     Y = data_array[:, cfg_dataset['idx_ab_tuple'][0]   : cfg_dataset['idx_ab_tuple'][1]]
@@ -37,13 +37,10 @@ def train_Network(cfg_NN, cfg_dataset, cfg_train, cfg_plots, data_array: np.ndar
     
     test_dataset       = TensorDataset(torch.from_numpy(X_test).float(), torch.from_numpy(Y_test).float())
     test_loader   = DataLoader(test_dataset, batch_size=batch_size)
-    
-    model.to(device)
 
     #Loss
     criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(),
-                                 lr=cfg_train.get('lr', 1e-4))
+
 
     num_epochs = cfg_train.get('num_epochs', 20)
     history = {'train_loss': [], 'val_loss': []}
@@ -78,6 +75,9 @@ def train_Network(cfg_NN, cfg_dataset, cfg_train, cfg_plots, data_array: np.ndar
         print(f"Epoch {epoch}/{num_epochs}")
         print(f"Train Loss: {epoch_train_loss:.4f}")
         print(f"Val Loss: {epoch_val_loss:.4f}")
+
+        if scheduler is not None:
+            scheduler.step()
 
     model.eval()
     test_loss = 0.0
