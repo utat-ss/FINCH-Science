@@ -60,21 +60,21 @@ def initialize_optimizer(cfg_optim: dict, model: torch.nn.Module):
 
     return optimizer, scheduler
 
-def initialize_model(cfg_NN, device):
+def initialize_model(cfg_model, device):
 
-    model_type = cfg_NN.get('model_type')
+    model_type = cfg_model.get('model_type')
 
     if model_type == 'MLP':
-        model = MLP(cfg_MLP= cfg_NN).to(device)
+        model = MLP(cfg_MLP= cfg_model).to(device)
     
     elif model_type == 'CNN1D_MLP':
-        model= CNN1D_MLP(cfg_CNNMLP= cfg_NN).to(device)
+        model= CNN1D_MLP(cfg_CNNMLP= cfg_model).to(device)
     
     elif model_type == 'NIF_PartialPaper':
-        model= NIF_PartialPaper(cfg_param_net= cfg_NN['cfg_param_net'], cfg_shape_net= cfg_NN['cfg_shape_net']).to(device)
+        model= NIF_PartialPaper(cfg_param_net= cfg_model['cfg_param_net'], cfg_shape_net= cfg_model['cfg_shape_net']).to(device)
     
     elif model_type == 'NIF_Pointwise':
-        model= NIF_Pointwise(cfg_param_net= cfg_NN['cfg_param_net'], cfg_shape_net= cfg_NN['cfg_shape_net']).to(device)
+        model= NIF_Pointwise(cfg_param_net= cfg_model['cfg_param_net'], cfg_shape_net= cfg_model['cfg_shape_net']).to(device)
 
     else:
         raise ValueError(f'Unsupported model type: {model_type}')
