@@ -23,8 +23,11 @@ class K_Fold_Crossval_Data:
             - fold (int): How many folds we want
 
         - cfg_dataset (dict): A dictionary to process dataset that contains:
-            - abundance_idx_range (list(int)): A list that specifies start-end indices of abundances
-            - value_idx_range (list(int)): A list that specifies start-end indices of spectral values
+            - abundance_idx_range (list(int)): A list that specifies start-end(included) indices of abundances
+            - value_idx_range (list(int)): A list that specifies start-end(included) indices of spectral values
+            - identity_idx_range (list(int)): A list that specifies start-end(included) indice(s) of name, and original index
+            - property_idx_range (list(int)): A list that specifies start-end(included) indice(s) of additional properties such as RWC, VZA, etc.
+            - seed (int): For replicibility of shuffle, def=69
 
     Returns
         - Training and validation data at kth fold when get_data_at_fold is used

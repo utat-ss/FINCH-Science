@@ -94,7 +94,7 @@ def train_Network(cfg_dataset, cfg_train, cfg_plots, data_array: np.ndarray, dev
 
     return model, history, test_loss
 
-def train_k_fold(cfg_train, cfg_dataset, cfg_model, cfg_optim, cfg_plots, dataset, device, loss):
+def train_k_fold(cfg_train, cfg_dataset, cfg_model, cfg_optim, dataset, device, loss):
 
     """
     Trains various networks using k-fold cross-val, returns them all.
@@ -104,59 +104,148 @@ def train_k_fold(cfg_train, cfg_dataset, cfg_model, cfg_optim, cfg_plots, datase
 
         - cfg_train (dict): A dictionary that contains:
             - fold (int): How many folds we want
-            - 
+            - batch_size (int): Batch size, default is 4
 
         - cfg_dataset (dict): A dictionary to process dataset that contains:
-            - abundance_idx_range (list(int)): A list that specifies start-end indices of abundances
-            - value_idx_range (list(int)): A list that specifies start-end indices of spectral values    
+            - abundance_idx_range (list(int)): A list that specifies start-end(included) indices of abundances
+            - value_idx_range (list(int)): A list that specifies start-end(included) indices of spectral values
+            - identity_idx_range (list(int)): A list that specifies start-end(included) indice(s) of name, and original index
+            - property_idx_range (list(int)): A list that specifies start-end(included) indice(s) of additional properties such as RWC, VZA, etc.
+            - seed (int): For replicibility of shuffle, def=69
+
+        - cfg_model (dict): Look at the specific model class you are using for this
+
+        - cfg_optim (dict): Look at the optimizer (and scheduler if applicable) generation functions for this
+
+    Returns
+        - folds_dict (dict): It has:
+            - for each fold_{i}_dict (dict):
+                - fold_loss_dict (dict): A dict that has all kinds of losses for both train and val:
+                    - total_loss
+                    - reconstruction
+                    - sum
+                    - bounds
+                - fold_predictions_dict: dicts for abundance predictions for both train and val
+                - trained_model: model.state_dict() so that we can reuse it
     """
 
+    folds_dict = {}
+
+    # Initialize the folder for all the specific folds
     K_Folder = K_Fold_Crossval_Data(dataset= dataset, cfg_train= cfg_train, cfg_dataset= cfg_dataset)
 
-    # Initialize the error metrics to handle model comparing
-    error_metric_absolute = 1e5
-    error_metric_list = []
-    models_list = []
-
+    # Repeat this for each fold
     for i in range(K_Folder.fold):
         
-        # Get the data at that fold
-        train_abundances, train_values, train_identities, val_abundaces, val_values, val_identities = K_Folder.get_data_at_fold(i)
+        # Get the data at that fold and load the data
+        train_abundances, train_values, train_identities, val_abundances, val_values, val_identities = K_Folder.get_data_at_fold(i)
 
-        # Define the network
+        # Load the training dataset, do not shuffle since we have already did
+        train_loader = DataLoader(
+            TensorDataset(train_values, train_abundances), 
+            batch_size= cfg_train.get('batch_size', 4), 
+            shuffle= False
+            )
+
+        # Load the validation dataset, do not shuffle since we have already did
+        val_loader = DataLoader(
+            TensorDataset(val_values, val_abundances), 
+            batch_size= 1, # Batch is 1 cuz we want to see individual samples' behavior
+            shuffle= False
+            ) 
+ 
+        # Dict where we will record the losses of this fold
+        fold_loss_dict = {
+            "train": {
+                "total": [],
+                "reconstruction": [],
+                "sum": [],
+                "bounds": [],
+            },
+            "val": {
+                "total": [],
+                "reconstruction": [],
+                "sum": [],
+                "bounds": []
+            }
+        }
+
+        # Dict where we will record the prediction arrays of this fold
+        fold_predictions_dict = {
+            "train": [],
+            "val": []
+        }
+
+        # Define the network, set to training mode and send to device
         model = initialize_model(cfg_model= cfg_model)
         model.to(device)
         model.train()
-        
-        # Initialize optimizer and scheduler, if passed
+
+        # Initialize optimizer and scheduler (if passed)
         optimizer, scheduler = initialize_optimizer(cfg_optim= cfg_optim)
 
-        # Track train_losses and val_losses to 
+        # Train for all batches
+        for train_inputs, train_outputs in train_loader:
 
+            # Send data to the same device as model
+            train_inputs, train_outputs = train_inputs.to(device), train_outputs.to(device)
 
+            # Reset grad, get predictions
+            optimizer.zero_grad()
+            preds = model(train_inputs)
 
+            # Calculate loss
+            total_loss, reconstruction_loss, sum_loss, bounds_loss = loss(
+                preds= preds, target= train_outputs
+            )
 
+            # Take loss, backpropogate, and update
+            total_loss.backward()
+            optimizer.step()
 
+            # Append the losses to the lists
+            fold_loss_dict['train']['total'].append(total_loss.item())
+            fold_loss_dict['train']['reconstruction'].append(reconstruction_loss.item())
+            fold_loss_dict['train']['sum'].append(sum_loss.item())
+            fold_loss_dict['train']['bounds'].append(bounds_loss.item())
 
+            # Convert the preds into cpu so that we can make a numpy array of them
+            preds_cpu = preds.cpu().numpy()
+            fold_predictions_dict['train'].append(preds_cpu)
 
+        # Setto evaluation mode
+        model.eval()
 
+        # We do not need grads for evals since we won't backprop
+        with torch.no_grad():
 
+            # For all value at the validation datasets
+            for val_inputs, val_outputs in val_loader:
 
+                # Send the data to the same device as model
+                val_inputs, val_outputs = val_inputs.to(device), val_outputs.to(device)
 
-        # train the model using the kth fold
-        #    during this, output the graph of different parts of the loss function (reconstr spectra wise doesn't sound like a bad idea, and the physical loss)
+                # Get predictions
+                preds = model(val_inputs)
 
-        # validate the model on kth fold
+                # Calculate loss
+                total_loss, reconstruction_loss, sum_loss, bounds_loss = loss(
+                    preds= preds, target= val_outputs
+                )
 
-        # based on validation results, get the error metric
+                # Append the losses to the lists
+                fold_loss_dict['val']['total'].append(total_loss.item())
+                fold_loss_dict['val']['reconstruction'].append(reconstruction_loss.item())
+                fold_loss_dict['val']['sum'].append(sum_loss.item())
+                fold_loss_dict['val']['bounds'].append(bounds_loss.item())
 
-        if interim_error_metric < error_metric:
-            ...
+                # Convert the preds into cpu so that we can make a numpy array of them
+                preds_cpu = preds.cpu().numpy()
+                fold_predictions_dict['val'].append(preds_cpu)
 
+        # Compile all the dicts to a master dict
+        folds_dict[f'fold_{i}_dict']['fold_loss_dict'] = fold_loss_dict
+        folds_dict[f'fold_{i}_dict']['fold_predictions_dict'] = fold_predictions_dict
+        folds_dict[f'fold_{i}_dict']['trained_model'] = model.state_dict()
 
-        # if the error metric is less than the 
-
-
-        ...
-        
-    ...
+    return folds_dict
