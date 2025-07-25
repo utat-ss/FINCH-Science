@@ -13,6 +13,10 @@ from defs.models.CNN import *
 from defs.models.MLP import *
 from defs.models.NIF import *
 
+from data_manipulation_functions import K_Fold_Crossval_Data
+from create_model_and_optimizer_functions import *
+
+
 def train_Network(cfg_dataset, cfg_train, cfg_plots, data_array: np.ndarray, device, model, optimizer, scheduler= None):
 
     X = data_array[:, cfg_dataset['idx_range_tuple'][0] : cfg_dataset['idx_range_tuple'][1]]
@@ -90,3 +94,69 @@ def train_Network(cfg_dataset, cfg_train, cfg_plots, data_array: np.ndarray, dev
 
     return model, history, test_loss
 
+def train_k_fold(cfg_train, cfg_dataset, cfg_model, cfg_optim, cfg_plots, dataset, device, loss):
+
+    """
+    Trains various networks using k-fold cross-val, returns them all.
+
+    Parameters
+        - dataset (torch.tensor): The entire dataset to be used as a tensor, must include true indices and true spectral names since we are shuffling
+
+        - cfg_train (dict): A dictionary that contains:
+            - fold (int): How many folds we want
+            - 
+
+        - cfg_dataset (dict): A dictionary to process dataset that contains:
+            - abundance_idx_range (list(int)): A list that specifies start-end indices of abundances
+            - value_idx_range (list(int)): A list that specifies start-end indices of spectral values    
+    """
+
+    K_Folder = K_Fold_Crossval_Data(dataset= dataset, cfg_train= cfg_train, cfg_dataset= cfg_dataset)
+
+    # Initialize the error metrics to handle model comparing
+    error_metric_absolute = 1e5
+    error_metric_list = []
+    models_list = []
+
+    for i in range(K_Folder.fold):
+        
+        # Get the data at that fold
+        train_abundances, train_values, train_identities, val_abundaces, val_values, val_identities = K_Folder.get_data_at_fold(i)
+
+        # Define the network
+        model = initialize_model(cfg_model= cfg_model)
+        model.to(device)
+        model.train()
+        
+        # Initialize optimizer and scheduler, if passed
+        optimizer, scheduler = initialize_optimizer(cfg_optim= cfg_optim)
+
+        # Track train_losses and val_losses to 
+
+
+
+
+
+
+
+
+
+
+
+        # train the model using the kth fold
+        #    during this, output the graph of different parts of the loss function (reconstr spectra wise doesn't sound like a bad idea, and the physical loss)
+
+        # validate the model on kth fold
+
+        # based on validation results, get the error metric
+
+        if interim_error_metric < error_metric:
+            ...
+
+
+        # if the error metric is less than the 
+
+
+        ...
+        
+    ...
