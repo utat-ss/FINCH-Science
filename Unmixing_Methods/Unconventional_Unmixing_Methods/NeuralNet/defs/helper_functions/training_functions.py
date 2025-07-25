@@ -13,8 +13,8 @@ from defs.models.CNN import *
 from defs.models.MLP import *
 from defs.models.NIF import *
 
-from data_manipulation_functions import K_Fold_Crossval_Data
-from create_model_and_optimizer_functions import *
+from defs.helper_functions.data_manipulation_functions import K_Fold_Crossval_Data
+from defs.helper_functions.create_model_and_optimizer_functions import *
 
 
 def train_Network(cfg_dataset, cfg_train, cfg_plots, data_array: np.ndarray, device, model, optimizer, scheduler= None):
@@ -177,14 +177,15 @@ def train_k_fold(cfg_train, cfg_dataset, cfg_model, cfg_optim, dataset, device, 
         }
 
         # Define the network, set to training mode and send to device
-        model = initialize_model(cfg_model= cfg_model)
+        model = initialize_model(cfg_model= cfg_model, device= device)
         model.to(device)
         model.train()
 
         # Initialize optimizer and scheduler (if passed)
-        optimizer, scheduler = initialize_optimizer(cfg_optim= cfg_optim)
+        optimizer, scheduler = initialize_optimizer(cfg_optim= cfg_optim, model= model)
 
         # Train for all batches
+        idx =1
         for train_inputs, train_outputs in train_loader:
 
             # Send data to the same device as model
@@ -192,11 +193,11 @@ def train_k_fold(cfg_train, cfg_dataset, cfg_model, cfg_optim, dataset, device, 
 
             # Reset grad, get predictions
             optimizer.zero_grad()
-            preds = model(train_inputs)
+            pred = model(train_inputs)
 
             # Calculate loss
             total_loss, reconstruction_loss, sum_loss, bounds_loss = loss(
-                preds= preds, target= train_outputs
+                pred= pred, target= train_outputs
             )
 
             # Take loss, backpropogate, and update
@@ -205,13 +206,16 @@ def train_k_fold(cfg_train, cfg_dataset, cfg_model, cfg_optim, dataset, device, 
 
             # Append the losses to the lists
             fold_loss_dict['train']['total'].append(total_loss.item())
-            fold_loss_dict['train']['reconstruction'].append(reconstruction_loss.item())
+            fold_loss_dict['train']['reconstruction'].append(reconstruction_loss.detach().cpu().numpy())
             fold_loss_dict['train']['sum'].append(sum_loss.item())
             fold_loss_dict['train']['bounds'].append(bounds_loss.item())
 
             # Convert the preds into cpu so that we can make a numpy array of them
-            preds_cpu = preds.cpu().numpy()
-            fold_predictions_dict['train'].append(preds_cpu)
+            pred_cpu = pred.detach().cpu().numpy()
+            fold_predictions_dict['train'].append(pred_cpu)
+
+            print(f'Training {idx} at fold {i} finished')
+            idx +=1
 
         # Setto evaluation mode
         model.eval()
@@ -220,30 +224,35 @@ def train_k_fold(cfg_train, cfg_dataset, cfg_model, cfg_optim, dataset, device, 
         with torch.no_grad():
 
             # For all value at the validation datasets
+            idx =1
             for val_inputs, val_outputs in val_loader:
 
                 # Send the data to the same device as model
                 val_inputs, val_outputs = val_inputs.to(device), val_outputs.to(device)
 
                 # Get predictions
-                preds = model(val_inputs)
+                pred = model(val_inputs)
 
                 # Calculate loss
                 total_loss, reconstruction_loss, sum_loss, bounds_loss = loss(
-                    preds= preds, target= val_outputs
+                    pred= pred, target= val_outputs
                 )
 
                 # Append the losses to the lists
                 fold_loss_dict['val']['total'].append(total_loss.item())
-                fold_loss_dict['val']['reconstruction'].append(reconstruction_loss.item())
+                fold_loss_dict['val']['reconstruction'].append(reconstruction_loss.detach().cpu().numpy())
                 fold_loss_dict['val']['sum'].append(sum_loss.item())
                 fold_loss_dict['val']['bounds'].append(bounds_loss.item())
 
                 # Convert the preds into cpu so that we can make a numpy array of them
-                preds_cpu = preds.cpu().numpy()
-                fold_predictions_dict['val'].append(preds_cpu)
+                pred_cpu = pred.detach().cpu().numpy()
+                fold_predictions_dict['val'].append(pred_cpu)
+                
+                print(f'Validation {idx} at fold {i} finished')
+                idx +=1
 
         # Compile all the dicts to a master dict
+        folds_dict[f'fold_{i}_dict'] = {}
         folds_dict[f'fold_{i}_dict']['fold_loss_dict'] = fold_loss_dict
         folds_dict[f'fold_{i}_dict']['fold_predictions_dict'] = fold_predictions_dict
         folds_dict[f'fold_{i}_dict']['trained_model'] = model.state_dict()

@@ -10,7 +10,7 @@ class MLP(nn.Module):
         self.o_dim = cfg_MLP['output_dim']
         self.hidden_layers = cfg_MLP['hidden_layers']
 
-        self.activation_list = cfg_MLP['linear_activation_list']
+        self.activation_list = cfg_MLP['activation_list']
         activation_map = {"ReLU": nn.ReLU(), "Sigmoid": nn.Sigmoid(), "LeakyReLU": nn.LeakyReLU(), "ELU": nn.ELU(), "Tanh": nn.Tanh(), "SiLU": nn.SiLU(),"Identity": nn.Identity()}
         for i, key in enumerate(self.activation_list): self.activation_list[i] = activation_map[key]
 

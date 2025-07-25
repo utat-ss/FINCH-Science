@@ -29,11 +29,11 @@ class ClassWisePhysical(nn.Module):
         - bounds_penalty (float): Deviance from the bounds rule for each EM class, meaned
     """
 
-    def __init__(self, cfg_loss):
+    def __init__(self, cfg_loss, device):
         super().__init__()
 
         # Get lambdas
-        self.lambdas_ab = cfg_loss.get('lambdas_ab', torch.tensor([0.5, 0.7, 1.0]))
+        self.lambdas_ab = (cfg_loss.get('lambdas_ab', torch.tensor([0.5, 0.7, 1.0]))).to(device)
         self.lambda_sum = cfg_loss.get('lambda_sum', 1)
         self.lambda_bounds = cfg_loss.get('lambda_bounds', 0.8)
 

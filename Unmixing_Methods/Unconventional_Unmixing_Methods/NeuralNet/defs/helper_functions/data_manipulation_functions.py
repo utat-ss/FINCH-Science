@@ -39,8 +39,10 @@ class K_Fold_Crossval_Data:
 
         # Retreive the seed to shuffle
         self.seed = cfg_dataset.get('seed', 69)
-        np.random.seed(self.seed)
-        self.full_dataset = dataset.index_select(0, torch.randperm(dataset.size(0)), generator= torch.manual_seed(self.seed))
+
+        torch.manual_seed(self.seed)
+        perm = torch.randperm(dataset.size(0))
+        self.full_dataset = dataset.index_select(0, perm)
 
         # Get the folds to seperate the dataset into chunks
         self.fold = cfg_train['fold']
@@ -98,7 +100,7 @@ class K_Fold_Crossval_Data:
         train_values = torch.cat([data for i, data in enumerate(self.value_dataset) if i != fold], dim = 0)
         train_identities = torch.cat([data for i, data in enumerate(self.identity_dataset) if i != fold], dim = 0)
 
-        if self.property_idx_range is not None:
+        if self.property_idx_range is not False:
             val_properties = self.property_dataset[fold]
             train_properties = torch.cat([data for i, data in enumerate(self.property_dataset) if i != fold], dim = 0)
 

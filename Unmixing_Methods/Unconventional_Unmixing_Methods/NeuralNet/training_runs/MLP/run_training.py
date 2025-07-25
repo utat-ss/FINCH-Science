@@ -29,7 +29,7 @@ cfg_NN = {
     "input_dim":  num_features,
     "output_dim": num_labels,
     "hidden_layers": [64, 32],
-    "linear_activation_list": ["ReLU", "ReLU", "Identity"],
+    "activation_list": ["ReLU", "ReLU", "Identity"],
 }
 #========================= edit learning data here
 cfg_train = {
