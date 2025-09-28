@@ -193,7 +193,7 @@ def n_findr(data, num_endmembers, max_iter=100, tol=1e-6):
         if not improved:
             break
     return endmembers
-
+#endregion
 
 # Linear Mixing Model
 # ---------------------------------------

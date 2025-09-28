@@ -19,16 +19,23 @@ class CNN1D_MLP(nn.Module):
         self.hidden_conv_kernelsize = cfg_CNNMLP.get('hidden_conv_kernelsize', [3] * len(self.hidden_conv_dim)) # Gets a default of 3
         self.hidden_conv_stride = cfg_CNNMLP.get('hidden_conv_stride', [1] * len(self.hidden_conv_dim)) # Gets a default of 1
         self.hidden_conv_padding = cfg_CNNMLP.get('hidden_conv_padding', [k // 2 for k in self.hidden_conv_kernelsize]) # Gets a default of 'same' padding
-        self.hidden_conv_pooltype = cfg_CNNMLP.get('hidden_conv_pooltype', []) ###################
+        self.hidden_conv_pooltype = cfg_CNNMLP.get('hidden_conv_pooltype', None) ###################
         self.hidden_conv_pool_kernelsize = cfg_CNNMLP.get('hidden_conv_pool_kernelsize', [])
         self.hidden_conv_pool_stride = cfg_CNNMLP.get('hidden_conv_pool_stride', [])
 
         # Activation functions
         activation_map = {"Linear_ReLU": nn.ReLU(), "Linear_Sigmoid": nn.Sigmoid(), "Linear_LeakyReLU": nn.LeakyReLU(), "Linear_ELU": nn.ELU(), "Linear_Tanh": nn.Tanh(), "Linear_SiLU": nn.SiLU()}
         self.linear_activation_list = cfg_CNNMLP['linear_activation_list']
-        for i, key in enumerate(self.linear_activation_list): self.linear_activation_list[i] = activation_map[key]
+        for i, key in enumerate(self.linear_activation_list): 
+            if key not in activation_map:
+                raise ValueError(f"Unknown activation key: {key}")
+            self.linear_activation_list[i] = activation_map[key]
+
         self.conv_activation_list = cfg_CNNMLP['conv_activation_list']
-        for i, key in enumerate(self.conv_activation_list): self.conv_activation_list[i] = activation_map[key]
+        for i, key in enumerate(self.conv_activation_list): 
+            if key not in activation_map:
+                raise ValueError(f"Unknown activation key: {key}")
+            self.conv_activation_list[i] = activation_map[key]
 
         # Construct the model, it has convolution layers first and then the MLP part
         cnn_layers = []
