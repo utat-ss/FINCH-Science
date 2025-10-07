@@ -71,12 +71,12 @@ def grid_search_predict(x_train, y_train, x_test, predict_columns, n_estimators,
     #this function runs RandomForestRegressor for all of the combinations of the specified hyperparameters (will take a long time if you add many)
     
     param_grid = {
-    'n_estimators': n_estimators, 
-    'max_depth': max_depth,
-    'min_samples_split': min_samples_split,
-    'min_samples_leaf': min_samples_leaf,
-    'max_features': max_features,
-    'criterion': criterion
+        'n_estimators': n_estimators, 
+        'max_depth': max_depth,
+        'min_samples_split': min_samples_split,
+        'min_samples_leaf': min_samples_leaf,
+        'max_features': max_features,
+        'criterion': criterion
     }
 
 
